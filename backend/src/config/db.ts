@@ -1,47 +1,45 @@
 import dns from "dns";
 import mongoose from "mongoose";
 
-// Force Node.js to use Google DNS so SRV lookups work on networks
-// where the local ISP DNS blocks or doesn't support SRV record queries.
-dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+// On local dev, ISP DNS may block MongoDB SRV lookups — use Google DNS.
+// On cloud (Render, Railway, etc.) this is not needed and is skipped.
+if (process.env.NODE_ENV !== "production") {
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+}
 
-// Emit a warning for deprecated filter behaviour — must be set before connect()
 mongoose.set("strictQuery", true);
 
 const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI;
 
   if (!uri) {
-    console.error("❌  MONGO_URI is not defined in environment variables.");
+    console.error("[FATAL] MONGO_URI is not defined.");
     process.exit(1);
   }
 
   try {
     const conn = await mongoose.connect(uri, {
-      // Recommended for Atlas free-tier / production
-      serverSelectionTimeoutMS: 10_000, // fail fast if cluster unreachable
-      socketTimeoutMS: 45_000,          // close idle sockets after 45 s
-      maxPoolSize: 10,                  // keep up to 10 connections in pool
+      serverSelectionTimeoutMS: 10_000,
+      socketTimeoutMS: 45_000,
+      maxPoolSize: 10,
     });
-
-    console.log(`✅  MongoDB connected: ${conn.connection.host}`);
+    console.log(`[INFO] MongoDB connected: ${conn.connection.host}`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`❌  MongoDB connection failed: ${message}`);
+    console.error(`[FATAL] MongoDB connection failed: ${message}`);
     process.exit(1);
   }
 };
 
-// Gracefully close connection on app shutdown
 process.on("SIGINT", async () => {
   await mongoose.connection.close();
-  console.log("🔌  MongoDB connection closed (SIGINT).");
+  console.log("[INFO] MongoDB connection closed (SIGINT).");
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
   await mongoose.connection.close();
-  console.log("🔌  MongoDB connection closed (SIGTERM).");
+  console.log("[INFO] MongoDB connection closed (SIGTERM).");
   process.exit(0);
 });
 
