@@ -206,6 +206,12 @@ export async function getOverview(req: Request, res: Response) {
     const placementNotPlaced   = Math.max(0, totalStudents - placementPlaced - placementInProcess);
     const placementTotalBasis  = totalStudents; // center number
 
+    // ── Batch Categories (all students by passoutYear) ────────────────────────
+    const allStudentsArr = allStudentsForPlacement as any[];
+    const batchFreshers = allStudentsArr.filter((s) => Number(s.passoutYear) === currentYear).length;
+    const batchRecent   = allStudentsArr.filter((s) => { const y = Number(s.passoutYear); return y >= 2022 && y < currentYear; }).length;
+    const batchSenior   = allStudentsArr.filter((s) => Number(s.passoutYear) < 2022).length;
+
     res.json({
       year,
       totalStudents,
@@ -224,8 +230,23 @@ export async function getOverview(req: Request, res: Response) {
       feeStatus: { total: feeTotal, fullyPaid: feeFullyPaid, partialPaid: feePartialPaid, notPaid: feeNotPaid, fullyPaidAmt: feeFullyPaidAmt, partialPaidAmt: feePartialPaidAmt, notPaidAmt: feeNotPaidAmt },
       enquiryStatus: { total: enquiryTotal, converted: enquiryConverted, inProgress: enquiryInProgress, notConverted: enquiryNotConverted, allTimeActive: allTimeActiveEnquiries as number, allTimeConverted: allTimeConvertedEnquiries as number, allTimeClosed: allTimeClosedEnquiries as number, prevTotal: prevEnquiryTotal, prevConverted: prevEnquiryConverted, prevInProgress: prevEnquiryInProgress, prevNotConverted: prevEnquiryNotConverted },
       placementStatus: { total: placementTotalBasis, placed: placementPlaced, inProcess: placementInProcess, notPlaced: placementNotPlaced },
+      batchCategories: { freshers: batchFreshers, recent: batchRecent, senior: batchSenior },
     });
   } catch (err: any) {
     res.status(500).json({ message: err.message ?? "Failed to fetch overview" });
+  }
+}
+
+// GET /api/dashboard/batch-categories
+export async function getBatchCategories(req: Request, res: Response) {
+  try {
+    const currentYear = new Date().getFullYear();
+    const students = await Student.find({}, { passoutYear: 1 }).lean();
+    const freshers = students.filter((s: any) => Number(s.passoutYear) === currentYear).length;
+    const recent   = students.filter((s: any) => { const y = Number(s.passoutYear); return y >= 2022 && y < currentYear; }).length;
+    const senior   = students.filter((s: any) => Number(s.passoutYear) < 2022).length;
+    res.json({ freshers, recent, senior, currentYear });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message ?? "Failed to fetch batch categories" });
   }
 }
