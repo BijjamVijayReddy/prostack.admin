@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output — Render will compile this via `npm run build`
+dist/
+
+# Environment secrets — set these in Render's Environment tab
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
