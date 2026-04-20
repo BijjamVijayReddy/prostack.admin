@@ -29,20 +29,21 @@ const loginSchema = yup.object({
   username: yup.string().required("Username is required"),
   password: yup.string().required("Password is required"),
 });
-type LoginValues = { username: string; password: string };
+type LoginValues = yup.InferType<typeof loginSchema>;
 
 const findSchema = yup.object({
   identifier: yup.string().required("Please enter your username, email or mobile number"),
 });
-type FindValues = { identifier: string };
+type FindValues = yup.InferType<typeof findSchema>;
 
 const resetSchema = yup.object({
   newPassword:     yup.string().min(6, "Minimum 6 characters").required("New password is required"),
   confirmPassword: yup.string()
     .required("Please confirm your password")
-    .oneOf([yup.ref("newPassword")], "Passwords do not match"),
+    .oneOf([yup.ref("newPassword")], "Passwords do not match")
+    .defined(),
 });
-type ResetValues = { newPassword: string; confirmPassword: string };
+type ResetValues = yup.InferType<typeof resetSchema>;
 
 /* â”€â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function Toast({

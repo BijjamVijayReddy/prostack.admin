@@ -31,31 +31,22 @@ const schema = yup.object({
     .matches(/^[0-9]{10}$/, "Enter a valid 10-digit mobile number")
     .required("Mobile number is required"),
   username: yup.string().trim().min(4, "At least 4 characters").required("Username is required"),
+  // Optional password change — leave empty to keep current password
   password: yup
     .string()
-    .transform((v) => (v === "" ? undefined : v))
     .optional()
-    .min(8, "At least 8 characters"),
+    .test("min-if-present", "At least 8 characters", (val) => !val || val.length >= 8),
   confirmPassword: yup
     .string()
-    .transform((v) => (v === "" ? undefined : v))
     .optional()
     .test("match", "Passwords do not match", function (val) {
-      const pwd = this.parent.password;
+      const pwd = this.parent.password as string | undefined;
       if (!pwd) return true;
       return pwd === val;
     }),
 });
 
-type FormValues = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobileNumber: string;
-  username: string;
-  password?: string;
-  confirmPassword?: string;
-};
+type FormValues = yup.InferType<typeof schema>;
 
 type ToastState = { message: string; type: "success" | "error" } | null;
 

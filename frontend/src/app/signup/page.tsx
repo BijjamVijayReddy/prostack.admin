@@ -31,14 +31,7 @@ const schema = yup.object({
   password:     yup.string().min(6, "Minimum 6 characters").required("Password is required"),
 });
 
-type FormValues = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobileNumber: string;
-  username: string;
-  password: string;
-};
+type FormValues = yup.InferType<typeof schema>;
 
 /* ─── Toast ─────────────────────────────────────────────── */
 function Toast({
