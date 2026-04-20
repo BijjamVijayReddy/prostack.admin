@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Student } from "../models/Student";
-import { Enquiry } from "../models/enquiry";
+import { Enquiry } from "../models/Enquiry";
 import { Placement } from "../models/Placement";
 
 // ── Date helpers ───────────────────────────────────────────────────────────────

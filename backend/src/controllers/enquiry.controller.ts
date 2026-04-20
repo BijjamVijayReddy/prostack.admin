@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Enquiry } from "../models/enquiry";
+import { Enquiry } from "../models/Enquiry";
 
 // GET /api/enquiries/next-number
 export async function getNextEnquiryNumber(req: Request, res: Response) {
