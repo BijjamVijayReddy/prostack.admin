@@ -13,21 +13,21 @@ const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI;
 
   if (!uri) {
-    console.error("[FATAL] MONGO_URI is not defined.");
-    process.exit(1);
+    throw new Error("MONGO_URI is not defined in environment variables.");
   }
+
+  console.log("[INFO] Attempting to connect to MongoDB...");
 
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 10_000,
+      serverSelectionTimeoutMS: 15_000,  // 15 s — give Atlas a little more headroom
       socketTimeoutMS: 45_000,
       maxPoolSize: 10,
     });
     console.log(`[INFO] MongoDB connected: ${conn.connection.host}`);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[FATAL] MongoDB connection failed: ${message}`);
-    process.exit(1);
+    // Re-throw so server.ts can log the full error and call process.exit once
+    throw err;
   }
 };
 

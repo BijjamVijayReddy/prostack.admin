@@ -37,7 +37,12 @@ const start = async () => {
 };
 
 start().catch((err: unknown) => {
-  const msg = err instanceof Error ? err.message : String(err);
-  console.error("[FATAL] Failed to start server:", msg);
+  if (err instanceof Error) {
+    console.error("[FATAL] Failed to start server:", err.message);
+    // Print the full stack so Render logs show exactly where it failed
+    if (err.stack) console.error(err.stack);
+  } else {
+    console.error("[FATAL] Failed to start server:", err);
+  }
   process.exit(1);
 });
