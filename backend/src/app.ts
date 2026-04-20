@@ -11,13 +11,18 @@ import { errorHandler } from "./middleware/error.middleware";
 const app = express();
 
 // CORS must come BEFORE body parser so error responses (413 etc.) also include CORS headers
-const allowedOrigin =
-  process.env.NODE_ENV === "production"
-    ? (process.env.FRONTEND_ORIGIN as string)
-    : "http://localhost:3000";
+// Always allow localhost for local dev (even when hitting the production Render backend).
+// In production also allow: the explicit FRONTEND_ORIGIN env var + all *.vercel.app previews.
+const allowedOrigins: (string | RegExp)[] = [
+  "http://localhost:3000", // local dev
+  /\.vercel\.app$/,        // Vercel preview deployments
+];
+if (process.env.FRONTEND_ORIGIN) {
+  allowedOrigins.push(process.env.FRONTEND_ORIGIN); // e.g. https://prostack-xyz.vercel.app
+}
 
 const corsOptions: cors.CorsOptions = {
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
