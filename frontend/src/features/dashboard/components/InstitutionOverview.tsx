@@ -26,6 +26,8 @@ import {
   UserPlusIcon,
   BriefcaseIcon,
   BanknotesIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
 } from "@heroicons/react/24/outline";
 import { FaJava, FaPython, FaReact, FaNodeJs } from "react-icons/fa";
 import { SiMongodb, SiSpringboot } from "react-icons/si";
@@ -156,10 +158,12 @@ function OverviewSkeleton() {
 interface InstitutionOverviewProps { range: DateRange }
 
 export function InstitutionOverview({ range }: InstitutionOverviewProps) {
-  const [data, setData]       = useState<OverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [data, setData]           = useState<OverviewData | null>(null);
+  const [yearData, setYearData]   = useState<OverviewData | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
 
+  // Fetch range-filtered data (for all cards except Total Students)
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -169,6 +173,15 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range.start.getTime(), range.end.getTime()]);
+
+  // Fetch full-year data — Total Students card is always year-scoped, never changes with filter
+  useEffect(() => {
+    const yr = range.start.getFullYear();
+    const yearStart = new Date(yr, 0, 1);
+    const yearEnd   = new Date(yr, 11, 31);
+    fetchOverview(yearStart, yearEnd).then(setYearData).catch(() => null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range.start.getFullYear()]);
 
   // ── useMemo MUST be before any conditional returns (Rules of Hooks) ──────────
   const trendOption = useMemo(() => ({
@@ -302,6 +315,19 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
   const topCourses = ALL_COURSES.map((course) => ({ course, count: enrollmentMap[course] ?? 0 }));
   const totalEnrolled = topCourses.reduce((s, c) => s + c.count, 0) || 1;
 
+  // ── Highest / Lowest admission month — always from full-year data ───────────
+  const yearTrendPairs = (yearData?.trendLabels ?? []).map((label, i) => ({
+    label,
+    count: yearData?.trendAdmissions?.[i] ?? 0,
+  })).filter((p) => p.count > 0);
+
+  const highMonth = yearTrendPairs.length
+    ? yearTrendPairs.reduce((a, b) => (b.count > a.count ? b : a))
+    : null;
+  const lowMonth = yearTrendPairs.length
+    ? yearTrendPairs.reduce((a, b) => (b.count < a.count ? b : a))
+    : null;
+
   return (
     <div className="flex flex-col gap-4">
 
@@ -331,7 +357,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
               {label}
             </p>
 
-            {/* Compare badge OR enquiry-based potential joiners */}
+            {/* Compare badge OR highest/lowest admission month (Total Students card) */}
             {showCompare ? (
             <span
               className="mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-medium"
@@ -345,32 +371,62 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
                 : `${compare.up ? "▲" : "▼"} ${compare.value} compared to ${cardCompareLabel}`}
             </span>
             ) : (
-              /* Potential joiners = inProgress enquiries × real conversion rate */
-              (() => {
-                const { total, prevTotal } = data.enquiryStatus;
-                if (!prevTotal) return null;
-                const grand = total + prevTotal || 1;
-                const thisPct = Math.round((total / grand) * 100);
-                const diff = total - prevTotal;
-                const diffColor = diff > 0 ? "#0f8a3c" : diff < 0 ? "#d32f2f" : "#888";
-                return (
-                  <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-[10px] font-medium" style={{ color: "var(--color-text-muted)" }}>Enquiries vs prev period</span>
-                      <span className="text-[10px] font-bold" style={{ color: diffColor }}>
-                        {diff > 0 ? `▲${diff}` : diff < 0 ? `▼${Math.abs(diff)}` : "—"}
-                      </span>
-                    </div>
-                    <div className="flex h-2 w-full overflow-hidden rounded-full" style={{ background: "#e3f0fc" }}>
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${thisPct}%`, background: "#1976d2" }} />
-                    </div>
-                    <div className="mt-1 flex justify-between text-[10px]" style={{ color: "var(--color-text-muted)" }}>
-                      <span>Prev: {prevTotal}</span>
-                      <span>Now: {total}</span>
-                    </div>
-                  </div>
-                );
-              })()
+              /* Highest & Lowest Admission Month — horizontal with number circles */
+              <div className="mt-3 flex items-center justify-between">
+                {(() => {
+                  const FULL_MONTH: Record<string, string> = {
+                    Jan: "January", Feb: "February", Mar: "March", Apr: "April",
+                    May: "May",     Jun: "June",      Jul: "July",  Aug: "August",
+                    Sep: "September", Oct: "October", Nov: "November", Dec: "December",
+                  };
+                  const fullName = (label: string) => FULL_MONTH[label] ?? label;
+                  return (
+                    <>
+                      {/* Highest */}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+                          style={{ background: "#e5f5ec", boxShadow: "0 2px 6px rgba(15,138,60,0.25)" }}
+                        >
+                          <ArrowTrendingUpIcon className="h-3 w-3" style={{ color: "#0f8a3c" }} />
+                        </span>
+                        <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+                          <span className="font-bold">Highest</span> - <span className="font-bold" style={{ color: "var(--color-text-primary)" }}>{highMonth ? fullName(highMonth.label) : "No data"}</span>
+                        </span>
+                        {highMonth && (
+                          <span
+                            className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                            style={{ background: "#0f8a3c", boxShadow: "0 2px 6px rgba(15,138,60,0.4)" }}
+                          >
+                            {highMonth.count}
+                          </span>
+                        )}
+                      </div>
+                      {/* divider — removed, justify-between handles spacing */}
+                      {/* Lowest */}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+                          style={{ background: "#fde8e8", boxShadow: "0 2px 6px rgba(211,47,47,0.25)" }}
+                        >
+                          <ArrowTrendingDownIcon className="h-3 w-3" style={{ color: "#d32f2f" }} />
+                        </span>
+                        <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+                          <span className="font-bold">Least</span> - <span className="font-bold" style={{ color: "var(--color-text-primary)" }}>{lowMonth ? fullName(lowMonth.label) : "No data"}</span>
+                        </span>
+                        {lowMonth && (
+                          <span
+                            className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                            style={{ background: "#d32f2f", boxShadow: "0 2px 6px rgba(211,47,47,0.4)" }}
+                          >
+                            {lowMonth.count}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             )}
           </div>
         ))}

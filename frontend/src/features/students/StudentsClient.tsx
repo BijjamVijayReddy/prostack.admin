@@ -9,6 +9,7 @@ import { Button } from "@headlessui/react";
 import { PlusCircleIcon, CheckCircleIcon, XMarkIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { StudentFormModal } from "./components/StudentFormModal";
 import { ReceiptPreviewModal } from "./components/ReceiptPreviewModal";
+import { StudentSearchBar } from "./components/StudentSearchBar";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 
 function SavedToast({ message, onClose }: { message: string; onClose: () => void }) {
@@ -100,13 +101,14 @@ export function StudentsClient() {
     <div className="space-y-4">
       {toastMsg && <SavedToast message={toastMsg} onClose={() => setToastMsg(null)} />}
       {errorMsg && <ErrorToast message={errorMsg} onClose={() => setErrorMsg(null)} />}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <StudentsFilters
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
         />
+        <StudentSearchBar students={students} />
         <Button
           className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer"
           onClick={() => setOpen(true)}

@@ -41,4 +41,9 @@ export interface OverviewData {
     inProcess: number;
     notPlaced: number;
   };
+  batchCategories: {
+    freshers: number;
+    recent: number;
+    senior: number;
+  };
 }

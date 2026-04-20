@@ -8,7 +8,7 @@ import {
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
 import { DateRange } from "./DateRangeFilter";
-import { fetchOverview } from "../dashboard.api";
+import { fetchOverview, fetchBatchCategories, BatchCategories } from "../dashboard.api";
 import { OverviewData } from "../dashboard.types";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -112,6 +112,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   const [data, setData]       = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
+  const [bc, setBc]           = useState<BatchCategories>({ freshers: 0, recent: 0, senior: 0, currentYear: new Date().getFullYear() });
 
   useEffect(() => {
     setLoading(true);
@@ -122,6 +123,12 @@ export function OrderSummary({ range }: OrderSummaryProps) {
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range.start.getTime(), range.end.getTime()]);
+
+  useEffect(() => {
+    fetchBatchCategories()
+      .then(setBc)
+      .catch(() => { /* keep zeros on error */ });
+  }, []);
 
   const period = getPeriodLabel(range);
 
@@ -137,7 +144,12 @@ export function OrderSummary({ range }: OrderSummaryProps) {
 
   const fs = data.feeStatus     ?? { total: 0, fullyPaid: 0, partialPaid: 0, notPaid: 0, fullyPaidAmt: 0, partialPaidAmt: 0, notPaidAmt: 0 };
   const es = data.enquiryStatus  ?? { total: 0, converted: 0, inProgress: 0, notConverted: 0 };
-  const ps = data.placementStatus ?? { total: 0, placed: 0, inProcess: 0, notPlaced: 0 };
+
+  // Use batchCategories from overview response if present, otherwise fall back to separate fetch
+  const activeBc = (data.batchCategories && (data.batchCategories.freshers + data.batchCategories.recent + data.batchCategories.senior) > 0)
+    ? { ...data.batchCategories, currentYear: new Date().getFullYear() }
+    : bc;
+  const currentYear = activeBc.currentYear ?? new Date().getFullYear();
 
   // â”€â”€ Fee card segments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const feeSegs = [
@@ -153,11 +165,10 @@ export function OrderSummary({ range }: OrderSummaryProps) {
     { label: "Not Converted / Lost",             value: pct(es.notConverted, es.total), color: RED   },
   ];
 
-  // â”€â”€ Placement card segments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const plcSegs = [
-    { label: "Placed",               value: pct(ps.placed,    ps.total), color: GREEN },
-    { label: "Eligible / In Process", value: pct(ps.inProcess, ps.total), color: AMBER },
-    { label: "Not Placed",           value: pct(ps.notPlaced, ps.total), color: RED   },
+  const batchCats = [
+    { label: String(currentYear),              sublabel: "(Freshers)",                       count: activeBc.freshers, color: "#1976d2" },
+    { label: `${currentYear - 1} – 2022`, sublabel: "(Experienced / Recent Graduates)", count: activeBc.recent,   color: AMBER     },
+    { label: "< 2022",                         sublabel: "(Senior / Alumni)",                count: activeBc.senior,   color: "#6d28d9" },
   ];
 
   return (
@@ -245,28 +256,28 @@ export function OrderSummary({ range }: OrderSummaryProps) {
             <div className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: "#fff4e0", boxShadow: "0 2px 8px 0 #ff980033" }}>
               <BriefcaseIcon className="h-4 w-4" style={{ color: "#ff9800" }} />
             </div>
-            <p className="type-h2" style={{ color: "var(--color-text-secondary)" }}>Placement Progress</p>
+            <p className="type-h2" style={{ color: "var(--color-text-secondary)" }}>Batch Categories</p>
           </div>
           <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: "#fff4e0", color: "#ff9800", boxShadow: "0 1px 6px 0 #ff980040" }}>{period}</span>
         </div>
-        <div className="flex items-center gap-4 mt-4">
-          <div className="flex-shrink-0">
-            <ReactECharts
-              option={makeDonutOption(String(ps.placed), plcSegs)}
-              style={{ width: 150, height: 150 }}
-              notMerge
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {plcSegs.map((s) => (
-              <div key={s.label} className="flex items-start gap-2">
-                <span className="mt-[3px] h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="type-label leading-snug" style={{ color: "var(--color-text-tertiary)" }}>
-                  <span className="font-semibold" style={{ color: "var(--color-text-secondary)" }}>{s.value}%</span> {s.label}
+        <div className="flex flex-col gap-3">
+          {batchCats.map(({ label, sublabel, count, color }) => (
+            <div key={label} className="flex items-center justify-between rounded-lg px-3 py-2.5" style={{ background: `${color}12`, border: `1px solid ${color}30` }}>
+              <div className="flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                  {label}
                 </span>
+                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>{sublabel}</span>
               </div>
-            ))}
-          </div>
+              <span
+                className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-2 text-xs font-bold text-white"
+                style={{ background: color, boxShadow: `0 2px 6px ${color}66` }}
+              >
+                {count}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -26,3 +26,21 @@ export async function fetchOverview(start: Date, end: Date): Promise<OverviewDat
   if (!res.ok) throw new Error("Failed to fetch dashboard overview");
   return res.json() as Promise<OverviewData>;
 }
+
+export interface BatchCategories {
+  freshers: number;
+  recent:   number;
+  senior:   number;
+  currentYear: number;
+}
+
+export async function fetchBatchCategories(): Promise<BatchCategories> {
+  const res = await fetch(`${API_BASE}/api/dashboard/batch-categories`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch batch categories");
+  return res.json() as Promise<BatchCategories>;
+}

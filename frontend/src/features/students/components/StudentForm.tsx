@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { studentSchema } from "../student.schema";
@@ -21,7 +21,399 @@ import {
   CalendarIcon,
   CreditCardIcon,
   ClockIcon,
+  ChevronDownIcon,
+  CheckIcon,
+  BanknotesIcon,
+  QrCodeIcon,
+  BuildingLibraryIcon,
 } from "@heroicons/react/24/outline";
+import { FaJava, FaPython, FaReact, FaMale, FaFemale, FaBriefcase, FaTimesCircle } from "react-icons/fa";
+import { SiMongodb, SiSpringboot } from "react-icons/si";
+import type { IconType } from "react-icons";
+
+const COURSES: { value: string; label: string; color: string; bg: string; Icon: IconType }[] = [
+  { value: "Java Full Stack",   label: "Java Full Stack",   color: "#e53935", bg: "#fde8e8", Icon: SiSpringboot },
+  { value: "Python Full Stack", label: "Python Full Stack", color: "#1976d2", bg: "#e3f0fc", Icon: FaPython     },
+  { value: "MERN Stack",        label: "MERN Stack",        color: "#43a047", bg: "#e5f5ec", Icon: SiMongodb    },
+  { value: "React JS",          label: "React JS",          color: "#0288d1", bg: "#e0f7fa", Icon: FaReact      },
+  { value: "Java",              label: "Java",              color: "#bf360c", bg: "#fbe9e7", Icon: FaJava       },
+  { value: "Python",            label: "Python",            color: "#f9a825", bg: "#fffde7", Icon: FaPython     },
+];
+
+const GENDERS: { value: string; label: string; color: string; bg: string; Icon: IconType }[] = [
+  { value: "Male",   label: "Male",   color: "#1976d2", bg: "#e3f0fc", Icon: FaMale   },
+  { value: "Female", label: "Female", color: "#d81b60", bg: "#fce4ec", Icon: FaFemale },
+];
+
+type HeroIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+const PAYMENT_MODES: { value: string; label: string; color: string; bg: string; Icon: HeroIcon }[] = [
+  { value: "Cash",          label: "Cash",          color: "#16a34a", bg: "#dcfce7", Icon: BanknotesIcon        },
+  { value: "UPI",           label: "UPI",           color: "#7c3aed", bg: "#ede9fe", Icon: QrCodeIcon           },
+  { value: "Bank Transfer", label: "Bank Transfer", color: "#0284c7", bg: "#e0f2fe", Icon: BuildingLibraryIcon  },
+  { value: "Card",          label: "Card",          color: "#0d9488", bg: "#ccfbf1", Icon: CreditCardIcon       },
+  { value: "Cheque",        label: "Cheque",        color: "#d97706", bg: "#fef3c7", Icon: DocumentTextIcon     },
+];
+
+const PLACEMENT_STATUSES: { value: string; label: string; color: string; bg: string; Icon: IconType }[] = [
+  { value: "Not Placed", label: "Not Placed", color: "#e53935", bg: "#fde8e8", Icon: FaTimesCircle },
+  { value: "Placed",     label: "Placed",     color: "#2e7d32", bg: "#e8f5e9", Icon: FaBriefcase   },
+];
+
+function PaymentModeDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = PAYMENT_MODES.find((p) => p.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2.5 rounded-lg border px-3 py-3 text-base bg-white transition-all"
+        style={{
+          borderColor: open ? (selected?.color ?? "#023430") : "#023430",
+          boxShadow: open ? `0 0 0 3px ${(selected?.color ?? "#023430")}20` : "none",
+        }}
+      >
+        {selected ? (
+          <>
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+              style={{ background: selected.bg, border: `1.5px solid ${selected.color}40` }}
+            >
+              <selected.Icon className="h-4 w-4" style={{ color: selected.color }} />
+            </div>
+            <span className="flex-1 text-left font-medium" style={{ color: selected.color }}>{selected.label}</span>
+          </>
+        ) : (
+          <>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+              <CreditCardIcon className="h-4 w-4 text-gray-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-400">Select Payment Mode</span>
+          </>
+        )}
+        <ChevronDownIcon
+          className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-gray-400"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 right-0 bottom-full z-[400] mb-1 overflow-hidden rounded-xl py-1"
+          style={{
+            background: "var(--color-bg-surface, #fff)",
+            border: "1.5px solid #e5e7eb",
+            boxShadow: "0 -8px 24px rgba(0,0,0,0.12), 0 -2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {PAYMENT_MODES.map((pm) => {
+            const isActive = pm.value === value;
+            return (
+              <button
+                key={pm.value}
+                type="button"
+                onClick={() => { onChange(pm.value); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                style={{ background: isActive ? `${pm.color}12` : "transparent" }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: pm.bg, border: `1.5px solid ${pm.color}35` }}
+                >
+                  <pm.Icon className="h-3.5 w-3.5" style={{ color: pm.color }} />
+                </div>
+                <span className="flex-1 text-left font-medium" style={{ color: isActive ? pm.color : "#374151" }}>
+                  {pm.label}
+                </span>
+                {isActive && <CheckIcon className="h-4 w-4 flex-shrink-0" style={{ color: pm.color }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlacementDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = PLACEMENT_STATUSES.find((p) => p.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2.5 rounded-lg border px-3 py-3 text-base bg-white transition-all"
+        style={{
+          borderColor: open ? (selected?.color ?? "#023430") : "#023430",
+          boxShadow: open ? `0 0 0 3px ${(selected?.color ?? "#023430")}20` : "none",
+        }}
+      >
+        {selected ? (
+          <>
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+              style={{ background: selected.bg, border: `1.5px solid ${selected.color}40` }}
+            >
+              <selected.Icon size={15} style={{ color: selected.color }} />
+            </div>
+            <span className="flex-1 text-left font-medium" style={{ color: selected.color }}>{selected.label}</span>
+          </>
+        ) : (
+          <>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+              <BriefcaseIcon className="h-4 w-4 text-gray-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-400">Select Status</span>
+          </>
+        )}
+        <ChevronDownIcon
+          className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-gray-400"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full z-[400] mt-1 overflow-hidden rounded-xl py-1"
+          style={{
+            background: "var(--color-bg-surface, #fff)",
+            border: "1.5px solid #e5e7eb",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {PLACEMENT_STATUSES.map((ps) => {
+            const isActive = ps.value === value;
+            return (
+              <button
+                key={ps.value}
+                type="button"
+                onClick={() => { onChange(ps.value); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                style={{ background: isActive ? `${ps.color}12` : "transparent" }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: ps.bg, border: `1.5px solid ${ps.color}35` }}
+                >
+                  <ps.Icon size={14} style={{ color: ps.color }} />
+                </div>
+                <span className="flex-1 text-left font-medium" style={{ color: isActive ? ps.color : "#374151" }}>
+                  {ps.label}
+                </span>
+                {isActive && <CheckIcon className="h-4 w-4 flex-shrink-0" style={{ color: ps.color }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GenderDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = GENDERS.find((g) => g.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2.5 rounded-lg border px-3 py-3 text-base bg-white transition-all"
+        style={{
+          borderColor: open ? (selected?.color ?? "#023430") : "#023430",
+          boxShadow: open ? `0 0 0 3px ${(selected?.color ?? "#023430")}20` : "none",
+        }}
+      >
+        {selected ? (
+          <>
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+              style={{ background: selected.bg, border: `1.5px solid ${selected.color}40` }}
+            >
+              <selected.Icon size={15} style={{ color: selected.color }} />
+            </div>
+            <span className="flex-1 text-left font-medium" style={{ color: selected.color }}>{selected.label}</span>
+          </>
+        ) : (
+          <>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+              <UserIcon className="h-4 w-4 text-gray-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-400">Select Gender</span>
+          </>
+        )}
+        <ChevronDownIcon
+          className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-gray-400"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full z-[400] mt-1 overflow-hidden rounded-xl py-1"
+          style={{
+            background: "var(--color-bg-surface, #fff)",
+            border: "1.5px solid #e5e7eb",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {GENDERS.map((g) => {
+            const isActive = g.value === value;
+            return (
+              <button
+                key={g.value}
+                type="button"
+                onClick={() => { onChange(g.value); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                style={{ background: isActive ? `${g.color}12` : "transparent" }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: g.bg, border: `1.5px solid ${g.color}35` }}
+                >
+                  <g.Icon size={14} style={{ color: g.color }} />
+                </div>
+                <span className="flex-1 text-left font-medium" style={{ color: isActive ? g.color : "#374151" }}>
+                  {g.label}
+                </span>
+                {isActive && <CheckIcon className="h-4 w-4 flex-shrink-0" style={{ color: g.color }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CourseDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = COURSES.find((c) => c.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2.5 rounded-lg border px-3 py-3 text-base bg-white transition-all"
+        style={{
+          borderColor: open ? (selected?.color ?? "#023430") : "#023430",
+          boxShadow: open ? `0 0 0 3px ${(selected?.color ?? "#023430")}20` : "none",
+        }}
+      >
+        {selected ? (
+          <>
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+              style={{ background: selected.bg, border: `1.5px solid ${selected.color}40` }}
+            >
+              <selected.Icon size={15} style={{ color: selected.color }} />
+            </div>
+            <span className="flex-1 text-left font-medium" style={{ color: selected.color }}>{selected.label}</span>
+          </>
+        ) : (
+          <>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+              <AcademicCapIcon className="h-4 w-4 text-gray-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-400">Select Course</span>
+          </>
+        )}
+        <ChevronDownIcon
+          className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-gray-400"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full z-[400] mt-1 overflow-hidden rounded-xl py-1"
+          style={{
+            background: "var(--color-bg-surface, #fff)",
+            border: "1.5px solid #e5e7eb",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {COURSES.map((course) => {
+            const isActive = course.value === value;
+            return (
+              <button
+                key={course.value}
+                type="button"
+                onClick={() => { onChange(course.value); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                style={{
+                  background: isActive ? `${course.color}12` : "transparent",
+                }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: course.bg, border: `1.5px solid ${course.color}35` }}
+                >
+                  <course.Icon size={14} style={{ color: course.color }} />
+                </div>
+                <span className="flex-1 text-left font-medium" style={{ color: isActive ? course.color : "#374151" }}>
+                  {course.label}
+                </span>
+                {isActive && <CheckIcon className="h-4 w-4 flex-shrink-0" style={{ color: course.color }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface StudentFormProps {
   onSubmit: (data: any) => void;
@@ -120,7 +512,7 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
         />
       </div>
 
-      {/* ADMISSION NO — auto-generated, read-only */}
+      {/* ADMISSION NO â€” auto-generated, read-only */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Admission Number</label>
         <div className="relative">
@@ -184,17 +576,10 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
       {/* GENDER */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Gender</label>
-        <div className="relative">
-          <UserIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-400 drop-shadow" />
-          <select
-            {...register("gender")}
-            className="w-full rounded-lg border pl-9 pr-3 py-3 text-base"
-          >
-            <option value="">Select Gender</option>
-            <option>Male</option>
-            <option>Female</option>
-          </select>
-        </div>
+        <GenderDropdown
+          value={watch("gender") ?? ""}
+          onChange={(v) => setValue("gender", v, { shouldValidate: true })}
+        />
         <p className="text-xs text-red-500">{errors.gender?.message}</p>
       </div>
 
@@ -215,22 +600,10 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
       {/* COURSE */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Course</label>
-        <div className="relative">
-          <AcademicCapIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 drop-shadow" />
-          <select
-            {...register("course")}
-            className="w-full rounded-lg border pl-9 pr-3 py-3 text-base"
-            defaultValue=""
-          >
-            <option value="" disabled>Select Course</option>
-            <option value="Java Full Stack">Java Full Stack</option>
-            <option value="Python Full Stack">Python Full Stack</option>
-            <option value="MERN Stack">MERN Stack</option>
-            <option value="React JS">React JS</option>
-            <option value="Java">Java</option>
-            <option value="Python">Python</option>
-          </select>
-        </div>
+        <CourseDropdown
+          value={watch("course") ?? ""}
+          onChange={(v) => setValue("course", v, { shouldValidate: true })}
+        />
         <p className="text-xs text-red-500">{errors.course?.message}</p>
       </div>
 
@@ -251,20 +624,14 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
       {/* PLACEMENT STATUS */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Placement Status</label>
-        <div className="relative">
-          <BriefcaseIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500 drop-shadow" />
-          <select
-            {...register("placementStatus")}
-            className="w-full rounded-lg border pl-9 pr-3 py-3 text-base"
-          >
-            <option value="Not Placed">Not Placed</option>
-            <option value="Placed">Placed</option>
-          </select>
-        </div>
+        <PlacementDropdown
+          value={watch("placementStatus") ?? "Not Placed"}
+          onChange={(v) => setValue("placementStatus", v as "Not Placed" | "Placed", { shouldValidate: true })}
+        />
         <p className="text-xs text-red-500">{errors.placementStatus?.message}</p>
       </div>
 
-      {/* JOINED DATE — defaults to today, admin can change */}
+      {/* JOINED DATE â€” defaults to today, admin can change */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Joined Date</label>
         <div className="relative">
@@ -287,7 +654,7 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
             type="number"
             {...register("totalFee")}
             placeholder="Total Fee"
-            className="w-full rounded-lg border pl-7 pr-3 py-3 text-base"
+            className="w-full rounded-lg border pl-7 pr-3 py-3 text-base [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </div>
         <p className="text-xs text-red-500">{errors.totalFee?.message}</p>
@@ -302,13 +669,13 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
             type="number"
             {...register("totalPaid")}
             placeholder="Total Paid"
-            className="w-full rounded-lg border pl-7 pr-3 py-3 text-base"
+            className="w-full rounded-lg border pl-7 pr-3 py-3 text-base [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </div>
         <p className="text-xs text-red-500">{errors.totalPaid?.message}</p>
       </div>
 
-      {/* PENDING — auto-calculated, read-only */}
+      {/* PENDING â€” auto-calculated, read-only */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Pending Amount</label>
         <div className="relative">
@@ -325,7 +692,7 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
         <p className="text-xs text-red-500">{errors.pendingAmount?.message}</p>
       </div>
 
-      {/* RECEIPT NO — auto-generated, read-only */}
+      {/* RECEIPT NO â€” auto-generated, read-only */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Receipt Number</label>
         <div className="relative">
@@ -354,7 +721,7 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
         <p className="text-xs text-red-500">{errors.passoutYear?.message}</p>
       </div>
 
-      {/* DUE DATE — enabled only when there is a pending amount */}
+      {/* DUE DATE â€” enabled only when there is a pending amount */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">
           Due Date {!hasPending && <span className="text-gray-400 font-normal">(no pending amount)</span>}
@@ -378,20 +745,10 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
       {/* PAYMENT MODE */}
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-1.5">Payment Mode</label>
-        <div className="relative">
-          <CreditCardIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-500 drop-shadow" />
-          <select
-            {...register("paymentMode")}
-            className="w-full rounded-lg border pl-9 pr-3 py-3 text-base"
-          >
-            <option value="">Select Payment Mode</option>
-            <option>Cash</option>
-            <option>UPI</option>
-            <option>Bank Transfer</option>
-            <option>Card</option>
-            <option>Cheque</option>
-          </select>
-        </div>
+        <PaymentModeDropdown
+          value={watch("paymentMode") ?? ""}
+          onChange={(v) => setValue("paymentMode", v, { shouldValidate: true })}
+        />
         <p className="text-xs text-red-500">{errors.paymentMode?.message}</p>
       </div>
 

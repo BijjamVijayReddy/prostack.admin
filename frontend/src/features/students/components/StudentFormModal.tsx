@@ -81,7 +81,7 @@ export function StudentFormModal({ open, onClose, student, onSaved, onError }: P
 
   return (
     <Dialog open={open} onClose={() => {}} className="relative z-50">
-      <div className="fixed inset-0 bg-black/40" />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
 
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="relative w-full max-w-4xl rounded-2xl bg-white p-8 shadow-2xl flex flex-col max-h-[92vh]">
