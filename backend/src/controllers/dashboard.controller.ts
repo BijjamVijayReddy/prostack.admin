@@ -248,6 +248,24 @@ export async function getOverview(req: Request, res: Response) {
   }
 }
 
+// GET /api/dashboard/pending-students
+// Returns ALL students with pendingAmount > 0 (not date-scoped — actionable outstanding list)
+export async function getPendingStudents(req: Request, res: Response) {
+  try {
+    const students = await Student.find(
+      { pendingAmount: { $gt: 0 } },
+      {
+        name: 1, admissionNo: 1, mobile: 1, course: 1,
+        totalFee: 1, totalPaid: 1, pendingAmount: 1,
+        studentStatus: 1, isRecoverable: 1, dueDate: 1, joinedDate: 1,
+      }
+    ).sort({ pendingAmount: -1 }).lean();
+    res.json({ students });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message ?? "Failed to fetch pending students" });
+  }
+}
+
 // GET /api/dashboard/batch-categories
 export async function getBatchCategories(req: Request, res: Response) {
   try {
