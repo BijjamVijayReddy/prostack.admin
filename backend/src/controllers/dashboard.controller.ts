@@ -248,12 +248,17 @@ export async function getOverview(req: Request, res: Response) {
   }
 }
 
-// GET /api/dashboard/pending-students
-// Returns ALL students with pendingAmount > 0 (not date-scoped — actionable outstanding list)
+// GET /api/dashboard/pending-students?start=YYYY-MM-DD&end=YYYY-MM-DD
+// Returns students with pendingAmount > 0 admitted within the selected date range
 export async function getPendingStudents(req: Request, res: Response) {
   try {
+    const { start, end } = req.query as { start?: string; end?: string };
+    const filter: Record<string, any> = { pendingAmount: { $gt: 0 } };
+    if (start && end) {
+      filter.joinedDate = { $gte: start, $lte: end };
+    }
     const students = await Student.find(
-      { pendingAmount: { $gt: 0 } },
+      filter,
       {
         name: 1, admissionNo: 1, mobile: 1, course: 1,
         totalFee: 1, totalPaid: 1, pendingAmount: 1,
