@@ -25,4 +25,6 @@ export interface Student {
 
   photo?: string | null;
   updatedAt?: string;
+  studentStatus?: "Active" | "Inactive";
+  isRecoverable?: boolean;
 }

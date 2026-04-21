@@ -21,6 +21,9 @@ export interface OverviewData {
     fullyPaidAmt: number;
     partialPaidAmt: number;
     notPaidAmt: number;
+    pendingRecoverable: number;
+    nonRecoverableAmt: number;
+    nonRecoverableCount: number;
   };
   enquiryStatus: {
     total: number;

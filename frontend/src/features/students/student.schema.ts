@@ -9,6 +9,7 @@ export const studentSchema = yup.object({
   joinedDate: yup.string().required("Joined date is required"),
 
   placementStatus: yup.string().oneOf(["Not Placed", "Placed"]).optional(),
+  studentStatus: yup.string().oneOf(["Active", "Inactive"]).optional(),
 
   mobile: yup
     .string()

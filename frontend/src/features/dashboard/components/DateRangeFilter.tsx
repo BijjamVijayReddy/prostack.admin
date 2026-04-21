@@ -151,7 +151,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
       {/* ── Trigger button ────────────────────────────────── */}
       <button
         onClick={() => { setOpen(v => !v); setShowCustom(false); }}
-        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition cursor-pointer"
+        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer hover:scale-[1.04] hover:shadow-lg active:scale-[0.97]"
         style={{
           backgroundColor: "#1a1a2e",
           color: "#e8e8f0",

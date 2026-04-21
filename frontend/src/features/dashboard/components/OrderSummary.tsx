@@ -134,7 +134,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
     );
   }
 
-  const fs = data.feeStatus     ?? { total: 0, fullyPaid: 0, partialPaid: 0, notPaid: 0, fullyPaidAmt: 0, partialPaidAmt: 0, notPaidAmt: 0 };
+  const fs = data.feeStatus     ?? { total: 0, fullyPaid: 0, partialPaid: 0, notPaid: 0, fullyPaidAmt: 0, partialPaidAmt: 0, notPaidAmt: 0, pendingRecoverable: 0, nonRecoverableAmt: 0, nonRecoverableCount: 0 };
   const es = data.enquiryStatus  ?? { total: 0, converted: 0, inProgress: 0, notConverted: 0 };
 
   const activeBc = data.batchCategories ?? { freshers: 0, recent: 0, senior: 0 };
@@ -144,7 +144,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   const feeSegs = [
     { label: "Fully Paid",   value: pct(fs.fullyPaid,   fs.total), count: fs.fullyPaid,   amt: fs.fullyPaidAmt,   color: GREEN },
     { label: "Partial Paid", value: pct(fs.partialPaid, fs.total), count: fs.partialPaid, amt: fs.partialPaidAmt, color: AMBER },
-    { label: "Not Paid",     value: pct(fs.notPaid,     fs.total), count: fs.notPaid,     amt: fs.notPaidAmt,     color: RED   },
+    { label: "Write-off",    value: pct(fs.nonRecoverableCount ?? fs.notPaid, fs.total), count: fs.nonRecoverableCount ?? fs.notPaid, amt: fs.nonRecoverableAmt ?? fs.notPaidAmt, color: RED   },
   ];
 
   // â”€â”€ Enquiry card segments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -164,7 +164,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
       {/* â”€â”€ Monthly Fee Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="rounded-xl p-5" style={CARD_STYLE}>
+      <div className="rounded-xl p-5 transition-transform hover:scale-[1.02] hover:shadow-lg" style={CARD_STYLE}>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: "#e3f0fc", boxShadow: "0 2px 8px 0 #1976d233" }}>
@@ -207,7 +207,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
       </div>
 
       {/* â”€â”€ Enquiry Conversion Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="rounded-xl p-5" style={CARD_STYLE}>
+      <div className="rounded-xl p-5 transition-transform hover:scale-[1.02] hover:shadow-lg" style={CARD_STYLE}>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: "#f5e6fb", boxShadow: "0 2px 8px 0 #9c27b033" }}>
@@ -239,7 +239,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
       </div>
 
       {/* ── Batch Categories (donut) ── */}
-      <div className="rounded-xl p-5" style={CARD_STYLE}>
+      <div className="rounded-xl p-5 transition-transform hover:scale-[1.02] hover:shadow-lg" style={CARD_STYLE}>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: "#fff4e0", boxShadow: "0 2px 8px 0 #ff980033" }}>

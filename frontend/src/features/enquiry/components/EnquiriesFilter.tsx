@@ -75,7 +75,7 @@ function CustomSelect({
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all duration-200 cursor-pointer"
+        className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all duration-200 cursor-pointer hover:scale-[1.04] hover:shadow-md active:scale-[0.97]"
         style={{
           background: "var(--color-bg-surface)",
           border: `1.5px solid ${open ? BRAND : "var(--color-border-default)"}`,

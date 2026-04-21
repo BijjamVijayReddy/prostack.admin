@@ -36,6 +36,7 @@ import { DateRange } from "./DateRangeFilter";
 import { fetchOverview } from "../dashboard.api";
 import { OverviewData } from "../dashboard.types";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PendingFeesModal } from "./PendingFeesModal";
 
 // ── Period label from range ───────────────────────────────────────────────────
 function getPeriodLabel(range: DateRange): string {
@@ -158,10 +159,11 @@ function OverviewSkeleton() {
 interface InstitutionOverviewProps { range: DateRange }
 
 export function InstitutionOverview({ range }: InstitutionOverviewProps) {
-  const [data, setData]           = useState<OverviewData | null>(null);
-  const [yearData, setYearData]   = useState<OverviewData | null>(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
+  const [data, setData]                     = useState<OverviewData | null>(null);
+  const [yearData, setYearData]             = useState<OverviewData | null>(null);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
+  const [pendingModalOpen, setPendingModal] = useState(false);
 
   // Fetch range-filtered data (for all cards except Total Students)
   useEffect(() => {
@@ -244,7 +246,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
   // ── Animated KPI numbers — must be before any conditional returns ──────────
   const animTotalStudents  = useCountUp(data?.totalStudents  ?? 0);
   const animNewAdmissions  = useCountUp(data?.newAdmissions  ?? 0);
-  const pendingFeesAmt     = data ? (data.feeStatus.partialPaidAmt + data.feeStatus.notPaidAmt) : 0;
+  const pendingFeesAmt     = data ? (data.feeStatus.pendingRecoverable ?? (data.feeStatus.partialPaidAmt + data.feeStatus.notPaidAmt)) : 0;
   const animPendingFees    = useCountUp(pendingFeesAmt);
   const animFeeCollection  = useCountUp(data?.feeCollectionPct ?? 0);
 
@@ -331,14 +333,21 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
     : null;
 
   return (
+    <>
     <div className="flex flex-col gap-4">
 
       {/* ── KPI cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(({ label, value, color, bg, Icon, badgeLabel, compareLabel: cardCompareLabel, showCompare, compare, ...rest }) => {
           const gaugeValue = (rest as any).gaugeValue as number | undefined;
+          const isPendingCard = label === "Pending Fees";
           return (
-          <div key={label} className="rounded-xl p-4" style={CARD_STYLE}>
+          <div
+            key={label}
+            className={`rounded-xl p-4 transition-transform hover:scale-[1.02] hover:shadow-lg${isPendingCard ? " cursor-pointer" : ""}`}
+            style={CARD_STYLE}
+            onClick={isPendingCard ? () => setPendingModal(true) : undefined}
+          >
             <div className="mb-2 flex items-center justify-between">
               <div
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
@@ -484,7 +493,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
 
       {/* ── Admissions Trend + Program Enrollment ────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="col-span-2 rounded-xl p-5" style={CARD_STYLE}>
+        <div className="col-span-2 rounded-xl p-5 transition-transform hover:scale-[1.01] hover:shadow-lg" style={CARD_STYLE}>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Admissions Trend
@@ -499,7 +508,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
           <ReactECharts option={trendOption} style={{ height: 248 }} notMerge />
         </div>
 
-        <div className="col-span-1 rounded-xl p-5" style={CARD_STYLE}>
+        <div className="col-span-1 rounded-xl p-5 transition-transform hover:scale-[1.02] hover:shadow-lg" style={CARD_STYLE}>
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Program-wise Enrollment
@@ -548,5 +557,13 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
       </div>
 
     </div>
+
+    <PendingFeesModal
+      open={pendingModalOpen}
+      onClose={() => setPendingModal(false)}
+      range={range}
+      totalPending={pendingFeesAmt}
+    />
+    </>
   );
 }

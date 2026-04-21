@@ -257,8 +257,10 @@ export function StudentSearchBar({ students }: StudentSearchBarProps) {
           style={{
             background: "var(--color-bg-surface)",
             border: `1.5px solid ${focused ? "#0f8a3c" : "var(--color-border-default)"}`,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)",
+            boxShadow: focused ? "0 2px 12px rgba(15,138,60,0.15), 0 1px 3px rgba(0,0,0,0.06)" : "0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)",
             outline: "none",
+            transform: focused ? "scale(1.02)" : "scale(1)",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
           }}
         >
           {/* Icon in circle */}

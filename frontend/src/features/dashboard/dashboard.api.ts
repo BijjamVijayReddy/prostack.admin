@@ -34,6 +34,31 @@ export interface BatchCategories {
   currentYear: number;
 }
 
+export interface PendingStudent {
+  _id: string;
+  name: string;
+  admissionNo: string;
+  mobile: string;
+  course: string;
+  totalFee: number;
+  totalPaid: number;
+  pendingAmount: number;
+  studentStatus?: "Active" | "Inactive";
+  isRecoverable?: boolean;
+  dueDate?: string;
+  joinedDate?: string;
+}
+
+export async function fetchPendingStudents(start: Date, end: Date): Promise<PendingStudent[]> {
+  const params = new URLSearchParams({ start: toISO(start), end: toISO(end) });
+  const res = await fetch(`${API_BASE}/api/dashboard/pending-students?${params}`, {
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch pending students");
+  const data = await res.json();
+  return data.students as PendingStudent[];
+}
+
 export async function fetchBatchCategories(): Promise<BatchCategories> {
   const res = await fetch(`${API_BASE}/api/dashboard/batch-categories`, {
     headers: {

@@ -254,7 +254,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
         <div ref={bellRef} className="relative">
           <button
             onClick={() => { setBellOpen((v) => !v); setEnquiryBellOpen(false); }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500 shadow-md shadow-red-200/70 hover:bg-red-100 hover:shadow-red-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500 shadow-md shadow-red-200/70 hover:bg-red-100 hover:scale-110 hover:shadow-red-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
             title="Payment Due (Today & Tomorrow)"
           >
             <BellAlertIcon className="h-5 w-5" />
@@ -266,7 +266,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
           </button>
 
           {bellOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-[60] w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-red-100 bg-red-50">
                 <div className="flex items-center gap-2">
                   <CurrencyRupeeIcon className="h-4 w-4 text-red-500" />
@@ -330,7 +330,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
         <div ref={enquiryBellRef} className="relative">
           <button
             onClick={() => { setEnquiryBellOpen((v) => !v); setBellOpen(false); }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-500 shadow-md shadow-rose-200/70 hover:bg-rose-100 hover:shadow-rose-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-500 shadow-md shadow-rose-200/70 hover:bg-rose-100 hover:scale-110 hover:shadow-rose-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
             title="Enquiries Expected to Join (Today & Tomorrow)"
           >
             <ClipboardDocumentListIcon className="h-5 w-5" />
@@ -342,7 +342,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
           </button>
 
           {enquiryBellOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-[60] w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-rose-100 bg-rose-50">
                 <div className="flex items-center gap-2">
                   <ClipboardDocumentListIcon className="h-4 w-4 text-rose-500" />
@@ -403,7 +403,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
 
         <div
           ref={dropdownRef}
-          className="relative flex items-center gap-3 rounded-xl px-3 py-2 cursor-pointer select-none shadow-md shadow-indigo-200/60 hover:shadow-indigo-300/70 active:scale-[0.98] transition-all duration-150"
+          className="relative z-[60] flex items-center gap-3 rounded-xl px-3 py-2 cursor-pointer select-none shadow-md shadow-indigo-200/60 hover:scale-[1.03] hover:shadow-indigo-300/70 active:scale-[0.98] transition-all duration-150"
           style={{ background: pillBg }}
           onClick={() => setDropdownOpen((v) => !v)}
         >
@@ -444,7 +444,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
 
           {/* Dropdown menu */}
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border border-gray-100 bg-white shadow-2xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-[60] w-64 rounded-2xl border border-gray-100 bg-white shadow-2xl overflow-hidden">
               {/* Profile row */}
               <div className="px-4 pt-4 pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-3 mb-3">

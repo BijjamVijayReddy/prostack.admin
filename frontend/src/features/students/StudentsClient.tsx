@@ -129,7 +129,7 @@ export function StudentsClient() {
             <StudentSearchBar students={students} />
           </div>
           <Button
-            className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:scale-[1.04] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer whitespace-nowrap"
             onClick={() => setOpen(true)}
           >
             <PlusCircleIcon className="h-4 w-4" />

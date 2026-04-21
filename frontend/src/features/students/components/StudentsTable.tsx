@@ -55,7 +55,23 @@ export function StudentsTable({ data, onEdit, onReceipt }: StudentsTableProps) {
       },
     },
     { accessorKey: "admissionNo", header: "Admission No" },
-    { accessorKey: "name", header: "Student Name" },
+    {
+      accessorKey: "name",
+      header: "Student Name",
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{student.name}</span>
+            {student.studentStatus === "Inactive" && (
+              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                Inactive
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
     { accessorKey: "courseTakenDate", header: "Admission Date" },
     {
       accessorKey: "mobile",
@@ -169,7 +185,7 @@ export function StudentsTable({ data, onEdit, onReceipt }: StudentsTableProps) {
 
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden mb-6" style={{ backgroundColor: "#f3f3f3" }}>
-      <div className="overflow-x-auto scrollbar-thin">
+      <div className="overflow-x-auto scrollbar-thin" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.15) transparent" }}>
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -211,10 +227,23 @@ export function StudentsTable({ data, onEdit, onReceipt }: StudentsTableProps) {
               return (
                 <tr
                   key={row.id}
-                  className="transition-colors"
+                  className="transition-all duration-150"
                   style={isFullyPaid ? { backgroundColor: "#dcfce7" } : undefined}
-                  onMouseEnter={e => { if (!isFullyPaid) (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(249,250,251,0.7)"; }}
-                  onMouseLeave={e => { if (!isFullyPaid) (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    if (!isFullyPaid) el.style.backgroundColor = "rgba(249,250,251,0.7)";
+                    el.style.transform = "scale(1.005)";
+                    el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.07)";
+                    el.style.zIndex = "1";
+                    el.style.position = "relative";
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement;
+                    if (!isFullyPaid) el.style.backgroundColor = "";
+                    el.style.transform = "";
+                    el.style.boxShadow = "";
+                    el.style.zIndex = "";
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-5 py-4 text-gray-700 whitespace-nowrap font-medium">

@@ -212,7 +212,22 @@ export function EnquiriesTable({ data, onEdit }: EnquiriesTableProps) {
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="transition-colors hover:bg-gray-50/70"
+                className="transition-all duration-150"
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.backgroundColor = "rgba(249,250,251,0.7)";
+                  el.style.transform = "scale(1.005)";
+                  el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.07)";
+                  el.style.position = "relative";
+                  el.style.zIndex = "1";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.backgroundColor = "";
+                  el.style.transform = "";
+                  el.style.boxShadow = "";
+                  el.style.zIndex = "";
+                }}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-5 py-4 text-gray-700 whitespace-nowrap">

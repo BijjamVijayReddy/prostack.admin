@@ -27,7 +27,7 @@ import {
   QrCodeIcon,
   BuildingLibraryIcon,
 } from "@heroicons/react/24/outline";
-import { FaJava, FaPython, FaReact, FaMale, FaFemale, FaBriefcase, FaTimesCircle } from "react-icons/fa";
+import { FaJava, FaPython, FaReact, FaMale, FaFemale, FaBriefcase, FaTimesCircle, FaUserCheck, FaUserSlash } from "react-icons/fa";
 import { SiMongodb, SiSpringboot } from "react-icons/si";
 import type { IconType } from "react-icons";
 
@@ -59,6 +59,85 @@ const PLACEMENT_STATUSES: { value: string; label: string; color: string; bg: str
   { value: "Not Placed", label: "Not Placed", color: "#e53935", bg: "#fde8e8", Icon: FaTimesCircle },
   { value: "Placed",     label: "Placed",     color: "#2e7d32", bg: "#e8f5e9", Icon: FaBriefcase   },
 ];
+
+const STUDENT_STATUSES: { value: string; label: string; color: string; bg: string; Icon: IconType }[] = [
+  { value: "Active",   label: "Active",   color: "#0f8a3c", bg: "#e5f5ec", Icon: FaUserCheck  },
+  { value: "Inactive", label: "Inactive (Dropped / Not Available)", color: "#d32f2f", bg: "#fde8e8", Icon: FaUserSlash },
+];
+
+function StudentStatusDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = STUDENT_STATUSES.find((s) => s.value === value) ?? STUDENT_STATUSES[0];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-2.5 rounded-lg border px-3 py-3 text-base bg-white transition-all"
+        style={{
+          borderColor: open ? (selected.color ?? "#023430") : "#023430",
+          boxShadow: open ? `0 0 0 3px ${selected.color}20` : "none",
+        }}
+      >
+        <div
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+          style={{ background: selected.bg, border: `1.5px solid ${selected.color}40` }}
+        >
+          <selected.Icon size={15} style={{ color: selected.color }} />
+        </div>
+        <span className="flex-1 text-left font-medium" style={{ color: selected.color }}>{selected.label}</span>
+        <ChevronDownIcon
+          className="h-4 w-4 flex-shrink-0 transition-transform duration-200 text-gray-400"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 right-0 top-full z-[400] mt-1 overflow-hidden rounded-xl py-1"
+          style={{
+            background: "var(--color-bg-surface, #fff)",
+            border: "1.5px solid #e5e7eb",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {STUDENT_STATUSES.map((ss) => {
+            const isActive = ss.value === value;
+            return (
+              <button
+                key={ss.value}
+                type="button"
+                onClick={() => { onChange(ss.value); setOpen(false); }}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                style={{ background: isActive ? `${ss.color}12` : "transparent" }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              >
+                <div
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: ss.bg, border: `1.5px solid ${ss.color}35` }}
+                >
+                  <ss.Icon size={14} style={{ color: ss.color }} />
+                </div>
+                <span className="flex-1 text-left font-medium" style={{ color: isActive ? ss.color : "#374151" }}>{ss.label}</span>
+                {isActive && <CheckIcon className="h-4 w-4 flex-shrink-0" style={{ color: ss.color }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function PaymentModeDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -447,6 +526,7 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
       joinedDate: defaultValues?.joinedDate
         ?? (defaultValues?.admissionMonth ? `${defaultValues.admissionMonth}-01` : new Date().toISOString().slice(0, 10)),
       placementStatus: defaultValues?.placementStatus ?? "Not Placed",
+      studentStatus: (defaultValues?.studentStatus ?? "Active") as "Active" | "Inactive",
       admissionMonth: defaultValues?.admissionMonth ?? "",
       totalFee: defaultValues?.totalFee ?? undefined,
       totalPaid: defaultValues?.totalPaid ?? undefined,
@@ -630,6 +710,24 @@ export function StudentForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
         />
         <p className="text-xs text-red-500">{errors.placementStatus?.message}</p>
       </div>
+
+      {/* STUDENT STATUS — edit only */}
+      {isEdit && (
+      <div>
+        <label className="block text-sm font-medium text-gray-600 mb-1.5">Student Status</label>
+        <StudentStatusDropdown
+          value={watch("studentStatus") ?? "Active"}
+          onChange={(v) => setValue("studentStatus", v as "Active" | "Inactive", { shouldValidate: true })}
+        />
+        {watch("studentStatus") === "Inactive" && (
+          <p className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <span className="mt-0.5 shrink-0">⚠</span>
+            <span>This student is marked as inactive. Pending amount will be treated as <strong>non-recoverable</strong> and excluded from the Pending Fees dashboard card.</span>
+          </p>
+        )}
+        <p className="text-xs text-red-500">{errors.studentStatus?.message}</p>
+      </div>
+      )}
 
       {/* JOINED DATE â€” defaults to today, admin can change */}
       <div>
