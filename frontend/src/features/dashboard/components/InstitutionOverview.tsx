@@ -24,7 +24,7 @@ import ReactECharts from "echarts-for-react";
 import {
   AcademicCapIcon,
   UserPlusIcon,
-  BriefcaseIcon,
+  CurrencyRupeeIcon,
   BanknotesIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -244,7 +244,8 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
   // ── Animated KPI numbers — must be before any conditional returns ──────────
   const animTotalStudents  = useCountUp(data?.totalStudents  ?? 0);
   const animNewAdmissions  = useCountUp(data?.newAdmissions  ?? 0);
-  const animStudentsPlaced = useCountUp(data?.studentsPlaced ?? 0);
+  const pendingFeesAmt     = data ? (data.feeStatus.partialPaidAmt + data.feeStatus.notPaidAmt) : 0;
+  const animPendingFees    = useCountUp(pendingFeesAmt);
   const animFeeCollection  = useCountUp(data?.feeCollectionPct ?? 0);
 
   const period       = getPeriodLabel(range);
@@ -286,15 +287,15 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
       compare:      pctChange(data.newAdmissions, data.prevNewAdmissions),
     },
     {
-      label:        "Students Placed",
-      value:        animStudentsPlaced.toLocaleString("en-IN"),
-      color:        "#ff9800",
-      bg:           "#fff4e0",
-      Icon:         BriefcaseIcon,
+      label:        "Pending Fees",
+      value:        `₹${animPendingFees.toLocaleString("en-IN")}`,
+      color:        "#e53935",
+      bg:           "#fde8e8",
+      Icon:         CurrencyRupeeIcon,
       badgeLabel:   period,
       compareLabel: compareLabel,
       showCompare:  true,
-      compare:      pctChange(data.studentsPlaced, data.prevStudentsPlaced),
+      compare:      { value: `${(data.feeStatus.notPaid + data.feeStatus.partialPaid)} students`, up: false },
     },
     {
       label:        "Fee Collection",
@@ -306,6 +307,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
       compareLabel: compareLabel,
       showCompare:  true,
       compare:      ptDiff(data.feeCollectionPct, data.prevFeeCollectionPct),
+      gaugeValue:   data.feeCollectionPct,
     },
   ];
 
@@ -333,7 +335,9 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
 
       {/* ── KPI cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(({ label, value, color, bg, Icon, badgeLabel, compareLabel: cardCompareLabel, showCompare, compare }) => (
+        {kpis.map(({ label, value, color, bg, Icon, badgeLabel, compareLabel: cardCompareLabel, showCompare, compare, ...rest }) => {
+          const gaugeValue = (rest as any).gaugeValue as number | undefined;
+          return (
           <div key={label} className="rounded-xl p-4" style={CARD_STYLE}>
             <div className="mb-2 flex items-center justify-between">
               <div
@@ -350,12 +354,55 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
               </span>
             </div>
 
+            {gaugeValue !== undefined ? (() => {
+              const gc = gaugeValue >= 75 ? "#22c55e" : gaugeValue >= 65 ? "#f97316" : "#ef4444";
+              const gcLight = gaugeValue >= 75 ? "#dcfce7" : gaugeValue >= 65 ? "#ffedd5" : "#fee2e2";
+              return (
+              <div className="flex items-center justify-between gap-1">
+                <div>
+                  <p className="text-2xl font-bold leading-tight" style={{ color: "var(--color-text-primary)" }}>{value}</p>
+                  <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>{label}</p>
+                </div>
+                <div style={{ width: 80, height: 60, marginTop: "-8px", marginRight: "-6px" }}>
+                  <ReactECharts
+                    option={{
+                      series: [{
+                        type: "gauge",
+                        startAngle: 200,
+                        endAngle: -20,
+                        min: 0,
+                        max: 100,
+                        splitNumber: 4,
+                        radius: "100%",
+                        center: ["50%", "65%"],
+                        itemStyle: { color: gc },
+                        progress: { show: true, width: 7, itemStyle: { color: gc } },
+                        pointer: { length: "58%", width: 4, itemStyle: { color: "#555" } },
+                        axisLine: { lineStyle: { width: 7, color: [[1, "#f5f5f5"]] } },
+                        axisTick: { show: false },
+                        splitLine: { show: false },
+                        axisLabel: { show: false },
+                        anchor: { show: true, size: 10, itemStyle: { color: "#555" } },
+                        detail: { show: false },
+                        data: [{ value: gaugeValue }],
+                      }],
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    notMerge
+                  />
+                </div>
+              </div>
+              );
+            })() : (
             <p className="text-2xl font-bold leading-tight" style={{ color: "var(--color-text-primary)" }}>
               {value}
             </p>
+            )}
+            {gaugeValue === undefined && (
             <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
               {label}
             </p>
+            )}
 
             {/* Compare badge OR highest/lowest admission month (Total Students card) */}
             {showCompare ? (
@@ -368,7 +415,9 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
             >
               {compare.value === "N/A"
                 ? "— no previous data"
-                : `${compare.up ? "▲" : "▼"} ${compare.value} compared to ${cardCompareLabel}`}
+                : compare.value.endsWith("students")
+                  ? `⚠ ${compare.value} with dues`
+                  : `${compare.up ? "▲" : "▼"} ${compare.value} compared to ${cardCompareLabel}`}
             </span>
             ) : (
               /* Highest & Lowest Admission Month — horizontal with number circles */
@@ -429,7 +478,8 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── Admissions Trend + Program Enrollment ────────────── */}

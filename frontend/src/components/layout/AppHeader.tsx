@@ -15,11 +15,27 @@ import {
   ClipboardDocumentListIcon,
   CurrencyRupeeIcon,
   ExclamationCircleIcon,
+  IdentificationIcon,
+  DevicePhoneMobileIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import { ProfileModal } from "./ProfileModal";
 import { fetchStudents } from "@/features/students/students.api";
 import { Student } from "@/features/students/students.types";
 import { fetchEnquiries } from "@/features/enquiry/enquiry.api";
+import { FaJava, FaPython, FaReact, FaCloud, FaCode } from "react-icons/fa";
+import { SiMongodb, SiDatadog } from "react-icons/si";
+
+function getCourseIcon(course: string): { icon: React.ReactNode; color: string } {
+  const c = course.toLowerCase();
+  if (c.includes("java"))         return { icon: <FaJava />,    color: "#e76f00" };
+  if (c.includes("python"))       return { icon: <FaPython />,  color: "#3572a5" };
+  if (c.includes("react"))        return { icon: <FaReact />,   color: "#61dafb" };
+  if (c.includes("mern"))         return { icon: <SiMongodb />, color: "#4db33d" };
+  if (c.includes("data"))         return { icon: <SiDatadog />, color: "#632ca6" };
+  if (c.includes("cloud"))        return { icon: <FaCloud />,   color: "#4a90e2" };
+  return { icon: <FaCode />, color: "#64748b" };
+}
 import { Enquiry } from "@/features/enquiry/enquiry.types";
 
 function SavedToast({ message, onClose }: { message: string; onClose: () => void }) {
@@ -285,10 +301,21 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
                               s._dayLabel === "today" ? "bg-red-100 text-red-600" : "bg-orange-100 text-orange-600"
                             }`}>{s._dayLabel === "today" ? "Today" : "Tomorrow"}</span>
                           </div>
-                          <p className="text-xs text-gray-500">{s.admissionNo} · {s.mobile}</p>
-                          <p className="mt-0.5 text-xs font-medium text-red-600">
-                            ₹{s.pendingAmount.toLocaleString("en-IN")}/- pending
-                          </p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <IdentificationIcon className="h-3 w-3 shrink-0" />
+                            <span>{s.admissionNo}</span>
+                            <span className="mx-0.5">·</span>
+                            <DevicePhoneMobileIcon className="h-3 w-3 shrink-0" />
+                            <span>{s.mobile}</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {(() => { const { icon, color } = getCourseIcon(s.course ?? ""); return <span style={{ color }} className="text-xs shrink-0">{icon}</span>; })()}
+                            <span className="text-xs text-gray-500 truncate">{s.course}</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <CurrencyRupeeIcon className="h-3 w-3 shrink-0 text-red-500" />
+                            <span className="text-xs font-medium text-red-600">{s.pendingAmount.toLocaleString("en-IN")}/- pending</span>
+                          </div>
                         </div>
                       </li>
                     ))}
@@ -303,12 +330,12 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
         <div ref={enquiryBellRef} className="relative">
           <button
             onClick={() => { setEnquiryBellOpen((v) => !v); setBellOpen(false); }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-500 shadow-md shadow-purple-200/70 hover:bg-purple-100 hover:shadow-purple-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-500 shadow-md shadow-rose-200/70 hover:bg-rose-100 hover:shadow-rose-300/70 active:scale-95 transition-all duration-150 cursor-pointer"
             title="Enquiries Expected to Join (Today & Tomorrow)"
           >
             <ClipboardDocumentListIcon className="h-5 w-5" />
             {dueEnquiries.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-[10px] font-bold text-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
                 {dueEnquiries.length > 9 ? "9+" : dueEnquiries.length}
               </span>
             )}
@@ -316,10 +343,10 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
 
           {enquiryBellOpen && (
             <div className="absolute right-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-purple-100 bg-purple-50">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-rose-100 bg-rose-50">
                 <div className="flex items-center gap-2">
-                  <ClipboardDocumentListIcon className="h-4 w-4 text-purple-500" />
-                  <p className="text-sm font-semibold text-purple-700">Expected to Join — Today & Tomorrow</p>
+                  <ClipboardDocumentListIcon className="h-4 w-4 text-rose-500" />
+                  <p className="text-sm font-semibold text-rose-700">Expected to Join — Today & Tomorrow</p>
                 </div>
                 <button onClick={() => setEnquiryBellOpen(false)} className="cursor-pointer">
                   <XMarkIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
@@ -336,23 +363,32 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
                     {(dueEnquiries as (Enquiry & { _dayLabel: string })[]).map((e) => (
                       <li
                         key={e._id}
-                        className="flex items-start gap-3 px-4 py-3 hover:bg-purple-50 transition cursor-pointer"
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-rose-50 transition cursor-pointer"
                         onClick={() => {
                           setEnquiryBellOpen(false);
                           router.push(`/enquiry?edit=${e._id}`);
                         }}
                       >
-                        <ClipboardDocumentListIcon className="mt-0.5 h-5 w-5 shrink-0 text-purple-500" />
+                        <ClipboardDocumentListIcon className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
                             <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                              e._dayLabel === "today" ? "bg-purple-100 text-purple-600" : "bg-indigo-100 text-indigo-600"
+                              e._dayLabel === "today" ? "bg-rose-100 text-rose-600" : "bg-orange-100 text-orange-600"
                             }`}>{e._dayLabel === "today" ? "Today" : "Tomorrow"}</span>
                           </div>
-                          <p className="text-xs text-gray-500">{e.enquiryNo} · {e.mobile}</p>
-                          <p className="text-xs text-gray-500 truncate">{e.course}</p>
-                          <p className="mt-0.5 text-xs font-medium text-purple-600">
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <IdentificationIcon className="h-3 w-3 shrink-0" />
+                            <span>{e.enquiryNo}</span>
+                            <span className="mx-0.5">·</span>
+                            <DevicePhoneMobileIcon className="h-3 w-3 shrink-0" />
+                            <span>{e.mobile}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                            {(() => { const { icon, color } = getCourseIcon(e.course); return <span style={{ color }} className="text-xs shrink-0">{icon}</span>; })()}
+                            <span className="truncate">{e.course}</span>
+                          </div>
+                          <p className="mt-0.5 text-xs font-medium text-rose-600">
                             Expected to join {e._dayLabel} — follow up!
                           </p>
                         </div>

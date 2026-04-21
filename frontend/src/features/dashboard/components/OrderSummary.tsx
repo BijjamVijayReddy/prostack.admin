@@ -75,7 +75,7 @@ function OrderSkeleton() {
 }
 
 // â”€â”€ Donut chart builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function makeDonutOption(center: string, segments: { label: string; value: number; color: string }[]) {
+function makeDonutOption(center: string, segments: { label: string; value: number; color: string }[], unit = "%") {
   return {
     tooltip: {
       trigger: "item",
@@ -84,7 +84,7 @@ function makeDonutOption(center: string, segments: { label: string; value: numbe
       borderWidth: 1,
       padding: [8, 12],
       textStyle: { color: "#e8e8f0", fontSize: 12 },
-      formatter: (p: any) => `${p.marker} ${p.name}: <strong>${p.value}%</strong>`,
+      formatter: (p: any) => `${p.marker} ${p.name}: <strong>${p.value}${unit}</strong>`,
       extraCssText: "border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.35);",
     },
     graphic: {
@@ -155,9 +155,9 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   ];
 
   const batchCats = [
-    { label: String(currentYear),              sublabel: "(Freshers)",                       count: activeBc.freshers, color: "#1976d2" },
-    { label: `${currentYear - 1} – 2022`, sublabel: "(Experienced / Recent Graduates)", count: activeBc.recent,   color: AMBER     },
-    { label: "< 2022",                         sublabel: "(Senior / Alumni)",                count: activeBc.senior,   color: "#6d28d9" },
+    { label: String(currentYear),                                    sublabel: "Freshers",          count: activeBc.freshers, color: GREEN     },
+    { label: `${currentYear - 1} – ${currentYear - 4}`,             sublabel: "Recent Graduates",  count: activeBc.recent,   color: AMBER     },
+    { label: `< ${currentYear - 4}`,                                 sublabel: "Senior / Alumni",   count: activeBc.senior,   color: "#ff9800" },
   ];
 
   return (
@@ -238,7 +238,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
         </div>
       </div>
 
-      {/* â”€â”€ Placement Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Batch Categories (donut) ── */}
       <div className="rounded-xl p-5" style={CARD_STYLE}>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -249,24 +249,39 @@ export function OrderSummary({ range }: OrderSummaryProps) {
           </div>
           <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: "#fff4e0", color: "#ff9800", boxShadow: "0 1px 6px 0 #ff980040" }}>{period}</span>
         </div>
-        <div className="flex flex-col gap-3">
-          {batchCats.map(({ label, sublabel, count, color }) => (
-            <div key={label} className="flex items-center justify-between rounded-lg px-3 py-2.5" style={{ background: `${color}12`, border: `1px solid ${color}30` }}>
-              <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                  {label}
-                </span>
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>{sublabel}</span>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            <ReactECharts
+              option={makeDonutOption(
+                String(activeBc.freshers + activeBc.recent + activeBc.senior),
+                batchCats.map((c) => ({ label: c.label, value: c.count, color: c.color })),
+                " students"
+              )}
+              style={{ width: 150, height: 150 }}
+              notMerge
+            />
+          </div>
+          <div className="flex flex-col gap-3 flex-1">
+            {batchCats.map(({ label, sublabel, count, color }) => (
+              <div key={label}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>{label}</span>
+                  </div>
+                  <span className="text-xs font-bold" style={{ color }}>
+                    {count} <span className="font-normal text-[11px]" style={{ color: "var(--color-text-muted)" }}>students</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-full rounded-full" style={{ width: `${pct(count, activeBc.freshers + activeBc.recent + activeBc.senior)}%`, background: color }} />
+                  </div>
+                  <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{sublabel}</span>
+                </div>
               </div>
-              <span
-                className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-2 text-xs font-bold text-white"
-                style={{ background: color, boxShadow: `0 2px 6px ${color}66` }}
-              >
-                {count}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

@@ -1,12 +1,16 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 
-// ── Institution Overview skeleton ─────────────────────────────────────────────
-function InstitutionOverviewSkeleton() {
-  const cardStyle = {
-    background: "var(--color-bg-surface)",
-    border: "1px solid var(--color-border-default)",
-    boxShadow: "var(--shadow-card)",
-  };
+const cardStyle = {
+  background: "var(--color-bg-surface)",
+  border: "1px solid var(--color-border-default)",
+  boxShadow: "var(--shadow-card)",
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DESKTOP SKELETON  (hidden on mobile, shown sm and above)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function DesktopInstitutionSkeleton() {
   return (
     <div className="flex flex-col gap-4">
       {/* 6 KPI cards */}
@@ -37,17 +41,9 @@ function InstitutionOverviewSkeleton() {
   );
 }
 
-// ── Order Summary skeleton ────────────────────────────────────────────────────
-function DonutCardSkeleton() {
+function DesktopDonutCardSkeleton() {
   return (
-    <div
-      className="rounded-xl p-5"
-      style={{
-        background: "var(--color-bg-surface)",
-        border: "1px solid var(--color-border-default)",
-        boxShadow: "var(--shadow-card)",
-      }}
-    >
+    <div className="rounded-xl p-5" style={cardStyle}>
       <Skeleton className="mb-4 h-4 w-32" />
       <div className="flex items-center gap-4">
         <Skeleton rounded="rounded-full" style={{ width: 150, height: 150, flexShrink: 0 }} />
@@ -64,37 +60,111 @@ function DonutCardSkeleton() {
   );
 }
 
-function OrderSummarySkeleton() {
+function DesktopOrderSummarySkeleton() {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <DonutCardSkeleton />
-      <DonutCardSkeleton />
-      <DonutCardSkeleton />
+      <DesktopDonutCardSkeleton />
+      <DesktopDonutCardSkeleton />
+      <DesktopDonutCardSkeleton />
     </div>
   );
 }
 
-// ── Dashboard full skeleton ───────────────────────────────────────────────────
-export function DashboardSkeleton() {
+function DesktopDashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      {/* Section label placeholder */}
+    <div className="hidden sm:flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="h-7 w-40 rounded-lg" />
       </div>
-
-      {/* Institution Overview */}
       <section>
         <Skeleton className="mb-3 h-3 w-40" />
-        <InstitutionOverviewSkeleton />
+        <DesktopInstitutionSkeleton />
       </section>
-
-      {/* Order Summary */}
       <section>
         <Skeleton className="mb-3 h-3 w-28" />
-        <OrderSummarySkeleton />
+        <DesktopOrderSummarySkeleton />
       </section>
     </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MOBILE SKELETON  (shown on mobile, hidden sm and above)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function MobileDashboardSkeleton() {
+  return (
+    <div className="flex sm:hidden flex-col gap-5 px-1">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-8 w-32 rounded-lg" />
+      </div>
+
+      {/* KPI cards — 2 columns */}
+      <section>
+        <Skeleton className="mb-3 h-3 w-36" />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl p-4" style={cardStyle}>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton rounded="rounded-lg" className="h-7 w-7 flex-shrink-0" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="mt-1.5 h-2.5 w-full" />
+              <Skeleton className="mt-1 h-3 w-14 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Trend chart — full width */}
+      <div className="rounded-xl p-4" style={cardStyle}>
+        <Skeleton className="mb-3 h-3.5 w-36" />
+        <Skeleton className="rounded-lg w-full" style={{ height: 180 }} />
+      </div>
+
+      {/* Program chart — full width */}
+      <div className="rounded-xl p-4" style={cardStyle}>
+        <Skeleton className="mb-3 h-3.5 w-44" />
+        <Skeleton className="rounded-lg w-full" style={{ height: 180 }} />
+      </div>
+
+      {/* Order Summary label */}
+      <section>
+        <Skeleton className="mb-3 h-3 w-28" />
+        {/* 3 donut cards stacked */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl p-4 mb-3" style={cardStyle}>
+            <Skeleton className="mb-3 h-3.5 w-32" />
+            <div className="flex items-center gap-4">
+              <Skeleton rounded="rounded-full" style={{ width: 90, height: 90, flexShrink: 0 }} />
+              <div className="flex flex-col gap-2.5 flex-1">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <Skeleton rounded="rounded-full" className="h-2 w-2 flex-shrink-0" />
+                    <Skeleton className="h-2.5 flex-1" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════════════════════════
+export function DashboardSkeleton() {
+  return (
+    <>
+      <MobileDashboardSkeleton />
+      <DesktopDashboardSkeleton />
+    </>
   );
 }
