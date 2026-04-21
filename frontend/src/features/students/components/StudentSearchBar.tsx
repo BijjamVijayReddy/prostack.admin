@@ -25,7 +25,9 @@ import {
   CalendarDaysIcon,
   BriefcaseIcon,
   IdentificationIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { Student } from "../students.types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -48,7 +50,7 @@ function initials(name: string) {
 }
 
 // ── Student Detail Modal ──────────────────────────────────────────────────────
-function StudentDetailModal({ student, onClose }: { student: Student; onClose: () => void }) {
+function StudentDetailModal({ student, onClose, onEdit }: { student: Student; onClose: () => void; onEdit: () => void }) {
   // close on backdrop click
   const paid    = student.totalPaid ?? 0;
   const total   = student.totalFee  ?? 0;
@@ -68,21 +70,24 @@ function StudentDetailModal({ student, onClose }: { student: Student; onClose: (
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl"
         style={{
           background: "var(--color-bg-surface)",
-          border: "1px solid var(--color-border-default)",
+          border: "1.5px solid #e2e8f0",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header banner ── */}
         <div className="relative h-24 rounded-t-2xl" style={{ background: "linear-gradient(135deg, #023430 0%, #0f8a3c 100%)" }}>
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition cursor-pointer"
-          >
-            <XMarkIcon className="h-4 w-4" />
-          </button>
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition cursor-pointer"
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
           {/* avatar */}
           <div className="absolute -bottom-10 left-6">
             {student.photo ? (
@@ -103,7 +108,17 @@ function StudentDetailModal({ student, onClose }: { student: Student; onClose: (
         </div>
 
         {/* ── Body ── */}
-        <div className="pt-14 px-6 pb-6">
+        <div className="relative pt-14 px-6 pb-6">
+          {/* Edit button — top-right of body */}
+          <button
+            onClick={onEdit}
+            title="Edit Student"
+            className="absolute top-4 right-6 flex h-8 w-8 items-center justify-center rounded-lg cursor-pointer transition-all duration-150 hover:scale-110 active:scale-95"
+            style={{ background: "#e3f0fc", border: "1.5px solid #1976d240", boxShadow: "0 2px 8px rgba(25,118,210,0.25)" }}
+          >
+            <PencilSquareIcon className="h-4 w-4" style={{ color: "#1976d2" }} />
+          </button>
+
           {/* Name + badges */}
           <div className="flex items-start justify-between flex-wrap gap-2">
             <div>
@@ -114,7 +129,7 @@ function StudentDetailModal({ student, onClose }: { student: Student; onClose: (
                 {student.admissionNo}
               </p>
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mt-8">
               <span
                 className="rounded-full px-3 py-1 text-xs font-semibold"
                 style={{ background: "#e5f5ec", color: "#0f8a3c" }}
@@ -206,6 +221,7 @@ export function StudentSearchBar({ students }: StudentSearchBarProps) {
   const [focused, setFocused]         = useState(false);
   const [selected, setSelected]       = useState<Student | null>(null);
   const containerRef                  = useRef<HTMLDivElement>(null);
+  const router                        = useRouter();
 
   // close dropdown on outside click
   useEffect(() => {
@@ -324,7 +340,14 @@ export function StudentSearchBar({ students }: StudentSearchBarProps) {
 
       {/* Detail modal */}
       {selected && (
-        <StudentDetailModal student={selected} onClose={() => setSelected(null)} />
+        <StudentDetailModal
+          student={selected}
+          onClose={() => setSelected(null)}
+          onEdit={() => {
+            setSelected(null);
+            router.push(`/students?edit=${selected._id}`);
+          }}
+        />
       )}
     </>
   );

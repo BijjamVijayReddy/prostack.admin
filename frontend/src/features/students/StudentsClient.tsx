@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchStudents } from "./students.api";
 import { Student } from "./students.types";
 import { StudentsFilters } from "./components/StudentsFilters";
@@ -64,6 +65,8 @@ function ErrorToast({ message, onClose }: { message: string; onClose: () => void
 }
 
 export function StudentsClient() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
@@ -83,6 +86,17 @@ export function StudentsClient() {
   };
 
   useEffect(() => { loadStudents(); }, []);
+
+  // Open edit modal if ?edit=<id> is in the URL
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || students.length === 0) return;
+    const found = students.find((s) => s._id === editId);
+    if (found) {
+      setEditStudent(found);
+      router.replace("/students", { scroll: false });
+    }
+  }, [searchParams, students, router]);
 
   // 🔥 FILTER LOGIC
   const filteredStudents = useMemo(() => {

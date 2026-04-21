@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchEnquiries } from "./enquiry.api";
 import { Enquiry } from "./enquiry.types";
 import { EnquiriesFilters } from "./components/EnquiriesFilter";
@@ -39,6 +40,8 @@ function ErrorToast({ message, onClose }: { message: string; onClose: () => void
 }
 
 export function EnquiryClient() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
@@ -58,6 +61,18 @@ export function EnquiryClient() {
   };
 
   useEffect(() => { loadEnquiries(); }, []);
+
+  // Open edit modal if ?edit=<id> is in the URL
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || enquiries.length === 0) return;
+    const found = enquiries.find((e) => e._id === editId);
+    if (found) {
+      setEditEnquiry(found);
+      // Remove query param from URL without re-navigating
+      router.replace("/enquiry", { scroll: false });
+    }
+  }, [searchParams, enquiries, router]);
 
   const filteredEnquiries = useMemo(() => {
     return enquiries.filter((e) => {

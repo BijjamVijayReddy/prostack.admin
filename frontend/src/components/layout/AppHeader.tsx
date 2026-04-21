@@ -269,7 +269,14 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
                 ) : (
                   <ul className="divide-y divide-gray-50">
                     {(dueStudents as (Student & { _dayLabel: string })[]).map((s) => (
-                      <li key={s._id} className="flex items-start gap-3 px-4 py-3 hover:bg-red-50 transition">
+                      <li
+                        key={s._id}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-red-50 transition cursor-pointer"
+                        onClick={() => {
+                          setBellOpen(false);
+                          router.push(`/students?edit=${s._id}`);
+                        }}
+                      >
                         <ExclamationCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
@@ -327,7 +334,14 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
                 ) : (
                   <ul className="divide-y divide-gray-50">
                     {(dueEnquiries as (Enquiry & { _dayLabel: string })[]).map((e) => (
-                      <li key={e._id} className="flex items-start gap-3 px-4 py-3 hover:bg-purple-50 transition">
+                      <li
+                        key={e._id}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-purple-50 transition cursor-pointer"
+                        onClick={() => {
+                          setEnquiryBellOpen(false);
+                          router.push(`/enquiry?edit=${e._id}`);
+                        }}
+                      >
                         <ClipboardDocumentListIcon className="mt-0.5 h-5 w-5 shrink-0 text-purple-500" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">

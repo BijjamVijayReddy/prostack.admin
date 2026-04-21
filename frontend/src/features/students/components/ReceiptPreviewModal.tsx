@@ -34,46 +34,48 @@ function ReceiptContent({ student }: { student: Student }) {
       style={{
         fontFamily: "'Segoe UI', Arial, sans-serif",
         width: "595px",
-        backgroundColor: "#ffffff",
+        minHeight: "842px",
+        backgroundColor: "#0f172a",
+        backgroundImage: "radial-gradient(ellipse at 20% 10%, rgba(30,58,95,0.8) 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, rgba(120,50,10,0.3) 0%, transparent 50%)",
         boxSizing: "border-box",
-        color: "#1a1a1a",
+        color: "#e2e8f0",
         fontSize: "13px",
         lineHeight: "1.5",
       }}
     >
       {/* ── TOP ACCENT BAR ── */}
-      <div style={{ height: "6px", background: "linear-gradient(90deg,#c0622a,#e8943a,#f7b205)" }} />
+      <div style={{ height: "4px", background: "linear-gradient(90deg,#f7b205,#e8943a,#c0622a)" }} />
 
       {/* ── HEADER ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 36px 20px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/proStackLogo-2.png" alt="Pro Stack Academy" style={{ width: "140px", height: "auto", objectFit: "contain" }} />
+        <img src="/proStacklogo.png" alt="Pro Stack Academy" style={{ width: "140px", height: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "28px", fontWeight: "900", letterSpacing: "5px", color: "#0B1220" }}>INVOICE</div>
-          <div style={{ fontSize: "11px", color: "#888", marginTop: "2px" }}>prostackacademy@gmail.com</div>
+          <div style={{ fontSize: "28px", fontWeight: "900", letterSpacing: "5px", color: "#ffffff" }}>INVOICE</div>
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>prostackacademy@gmail.com</div>
         </div>
       </div>
 
       {/* ── DIVIDER ── */}
-      <div style={{ height: "1px", background: "#f0e8df", margin: "0 36px" }} />
+      <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 36px" }} />
 
       {/* ── META + BILL TO (side by side) ── */}
       <div style={{ display: "flex", gap: "16px", padding: "20px 36px", alignItems: "flex-start" }}>
         {/* Invoice details */}
-        <div style={{ flex: 1, background: "#fdf6ee", border: "1px solid #f0dbbf", borderRadius: "8px", padding: "14px 16px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "#c0622a", letterSpacing: "1.5px", marginBottom: "10px", textTransform: "uppercase" }}>Invoice Details</div>
+        <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(247,178,5,0.25)", borderRadius: "10px", padding: "14px 16px", backdropFilter: "blur(4px)" }}>
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "#f7b205", letterSpacing: "1.5px", marginBottom: "10px", textTransform: "uppercase" }}>Invoice Details</div>
           <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px" }}>
             <tbody>
               {[
-                ["Invoice No", <span style={{ fontWeight: "700", color: "#0B1220" }}>{receiptNo}</span>],
+                ["Invoice No", <span style={{ fontWeight: "700", color: "#ffffff" }}>{receiptNo}</span>],
                 ["Invoice Date", fmtDate(student.courseTakenDate)],
-                ...(isPending && student.dueDate ? [["Due Date", <span style={{ color: "#dc2626", fontWeight: "600" }}>{fmtDate(student.dueDate)}</span>]] : []),
+                ...(isPending && student.dueDate ? [["Due Date", <span style={{ color: "#f87171", fontWeight: "600" }}>{fmtDate(student.dueDate)}</span>]] : []),
                 ["Admission No", student.admissionNo],
                 ["Payment Mode", student.paymentMode || "—"],
               ].map(([label, val], i) => (
                 <tr key={i}>
-                  <td style={{ color: "#888", paddingBottom: "5px", paddingRight: "12px", whiteSpace: "nowrap" }}>{label}</td>
-                  <td style={{ fontWeight: "500", paddingBottom: "5px" }}>: {val as any}</td>
+                  <td style={{ color: "#94a3b8", paddingBottom: "5px", paddingRight: "12px", whiteSpace: "nowrap" }}>{label}</td>
+                  <td style={{ fontWeight: "500", paddingBottom: "5px", color: "#e2e8f0" }}>: {val as any}</td>
                 </tr>
               ))}
             </tbody>
@@ -81,19 +83,19 @@ function ReceiptContent({ student }: { student: Student }) {
         </div>
 
         {/* Bill To */}
-        <div style={{ flex: 1, background: "#f8faff", border: "1px solid #dde8ff", borderRadius: "8px", padding: "14px 16px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "#3b5bdb", letterSpacing: "1.5px", marginBottom: "10px", textTransform: "uppercase" }}>Bill To</div>
+        <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(99,179,237,0.25)", borderRadius: "10px", padding: "14px 16px", backdropFilter: "blur(4px)" }}>
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "#63b3ed", letterSpacing: "1.5px", marginBottom: "10px", textTransform: "uppercase" }}>Bill To</div>
           <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px" }}>
             <tbody>
               {[
-                ["Name", <span style={{ fontWeight: "700" }}>{student.name}</span>],
+                ["Name", <span style={{ fontWeight: "700", color: "#ffffff" }}>{student.name}</span>],
                 ["Mobile", `+91-${student.mobile}`],
                 ["Email", student.email],
                 ["City", student.city],
               ].map(([label, val], i) => (
                 <tr key={i}>
-                  <td style={{ color: "#888", paddingBottom: "5px", paddingRight: "12px", whiteSpace: "nowrap" }}>{label}</td>
-                  <td style={{ fontWeight: "500", paddingBottom: "5px" }}>: {val as any}</td>
+                  <td style={{ color: "#94a3b8", paddingBottom: "5px", paddingRight: "12px", whiteSpace: "nowrap" }}>{label}</td>
+                  <td style={{ fontWeight: "500", paddingBottom: "5px", color: "#e2e8f0" }}>: {val as any}</td>
                 </tr>
               ))}
             </tbody>
@@ -105,19 +107,19 @@ function ReceiptContent({ student }: { student: Student }) {
       <div style={{ padding: "0 36px", marginBottom: "16px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
           <thead>
-            <tr style={{ background: "#0B1220", color: "#fff" }}>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: "600", borderRadius: "6px 0 0 0", width: "50px" }}>#</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: "600" }}>Course / Description</th>
-              <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: "600", borderRadius: "0 6px 0 0" }}>Amount</th>
+            <tr style={{ background: "linear-gradient(90deg,#f7b205,#e8943a)", color: "#0B1220" }}>
+              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: "700", borderRadius: "8px 0 0 0", width: "50px" }}>#</th>
+              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: "700" }}>Course / Description</th>
+              <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: "700", borderRadius: "0 8px 0 0" }}>Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr style={{ background: "#fafafa", borderBottom: "1px solid #eee" }}>
-              <td style={{ padding: "12px 14px", color: "#888" }}>1</td>
-              <td style={{ padding: "12px 14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.3px" }}>{student.course}
-                {student.stream ? <span style={{ display: "block", fontWeight: "400", fontSize: "11px", color: "#888", textTransform: "none" }}>{student.stream}</span> : null}
+            <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <td style={{ padding: "12px 14px", color: "#64748b" }}>1</td>
+              <td style={{ padding: "12px 14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.3px", color: "#f1f5f9" }}>{student.course}
+                {student.stream ? <span style={{ display: "block", fontWeight: "400", fontSize: "11px", color: "#94a3b8", textTransform: "none" }}>{student.stream}</span> : null}
               </td>
-              <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: "700" }}>{fmt(student.totalFee)}</td>
+              <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: "700", color: "#f1f5f9" }}>{fmt(student.totalFee)}</td>
             </tr>
           </tbody>
         </table>
@@ -125,19 +127,19 @@ function ReceiptContent({ student }: { student: Student }) {
 
       {/* ── SUMMARY ── */}
       <div style={{ padding: "0 36px", marginBottom: "16px" }}>
-        <div style={{ marginLeft: "auto", width: "260px", background: "#fafafa", border: "1px solid #eee", borderRadius: "8px", overflow: "hidden" }}>
+        <div style={{ marginLeft: "auto", width: "260px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden" }}>
           {[
-            ["Total Fee", fmt(student.totalFee), "#0B1220", "600"],
-            ["Amount Paid", fmt(student.totalPaid), "#166534", "600"],
-            ...(isPending ? [["Pending", fmt(student.pendingAmount), "#dc2626", "700"]] : []),
+            ["Total Fee", fmt(student.totalFee), "#f1f5f9", "600"],
+            ["Amount Paid", fmt(student.totalPaid), "#4ade80", "600"],
+            ...(isPending ? [["Pending", fmt(student.pendingAmount), "#f87171", "700"]] : []),
           ].map(([label, val, color, weight], i, arr) => (
             <div key={i} style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
               padding: "9px 14px",
-              borderBottom: i < arr.length - 1 ? "1px solid #eee" : "none",
+              borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
               fontSize: "12px",
             }}>
-              <span style={{ color: "#666" }}>{label}</span>
+              <span style={{ color: "#94a3b8" }}>{label}</span>
               <span style={{ color, fontWeight: weight as any }}>{val}</span>
             </div>
           ))}
@@ -147,30 +149,31 @@ function ReceiptContent({ student }: { student: Student }) {
       {/* ── TOTAL BANNER ── */}
       <div style={{
         margin: "0 36px 20px",
-        background: "linear-gradient(135deg,#0B1220,#1e3a5f)",
-        borderRadius: "8px",
+        background: "linear-gradient(135deg,#f7b205 0%,#e8943a 50%,#c0622a 100%)",
+        borderRadius: "10px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "14px 20px",
+        padding: "16px 20px",
+        boxShadow: "0 4px 20px rgba(247,178,5,0.3)",
       }}>
         <div>
-          <div style={{ color: "#f7b205", fontSize: "10px", fontWeight: "700", letterSpacing: "2px", textTransform: "uppercase" }}>Grand Total</div>
-          <div style={{ color: "#aac4e8", fontSize: "10px", marginTop: "2px" }}>{isPending ? "Includes pending balance" : "Fully Paid ✓"}</div>
+          <div style={{ color: "#0B1220", fontSize: "10px", fontWeight: "800", letterSpacing: "2px", textTransform: "uppercase" }}>Grand Total</div>
+          <div style={{ color: "rgba(0,0,0,0.55)", fontSize: "10px", marginTop: "2px" }}>{isPending ? "Includes pending balance" : "Fully Paid ✓"}</div>
         </div>
-        <div style={{ color: "#fff", fontWeight: "900", fontSize: "20px", letterSpacing: "0.5px" }}>{fmt(student.totalFee)}</div>
+        <div style={{ color: "#0B1220", fontWeight: "900", fontSize: "22px", letterSpacing: "0.5px" }}>{fmt(student.totalFee)}</div>
       </div>
 
       {/* ── FOOTER ── */}
-      <div style={{ margin: "0 36px", borderTop: "1px solid #f0e8df", paddingTop: "14px", paddingBottom: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#aaa" }}>
-          <span>Thank you for choosing <strong style={{ color: "#c0622a" }}>Pro Stack Academy</strong></span>
+      <div style={{ margin: "0 36px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "14px", paddingBottom: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#64748b" }}>
+          <span>Thank you for choosing <strong style={{ color: "#f7b205" }}>Pro Stack Academy</strong></span>
           <span style={{ fontSize: "10px" }}>This is a system-generated invoice.</span>
         </div>
       </div>
 
       {/* ── BOTTOM BAR ── */}
-      <div style={{ height: "4px", background: "linear-gradient(90deg,#f7b205,#e8943a,#c0622a)" }} />
+      <div style={{ height: "4px", background: "linear-gradient(90deg,#c0622a,#e8943a,#f7b205)" }} />
     </div>
   );
 }
@@ -221,19 +224,25 @@ prostackacademy@gmail.com`
       ? `Receipt_${student.receiptNo || student.admissionNo}`
       : "Receipt",
     pageStyle: `
-      @page { size: A4; margin: 0; }
+      @page { size: A4 portrait; margin: 0; }
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
       @media print {
+        html, body { margin: 0 !important; padding: 0 !important; }
         body * { visibility: hidden; }
         #receipt-print-area, #receipt-print-area * { visibility: visible; }
         #receipt-print-area {
           position: fixed !important;
-          top: 0; left: 0;
-          width: 100vw;
+          top: 0 !important;
+          left: 0 !important;
+          width: 595px !important;
+          min-height: 842px !important;
+          transform: scale(1.3361) !important;
+          transform-origin: top left !important;
+          margin: 0 !important;
         }
       }
     `,
@@ -291,15 +300,15 @@ prostackacademy@gmail.com`
           {/* ── Invoice preview (no scroll) ── */}
           <div
             className="flex justify-center"
-            style={{ background: "linear-gradient(160deg,#e8edf5 0%,#d4dce8 100%)", padding: "28px 28px 28px" }}
+            style={{ background: "linear-gradient(160deg,#0a0f1e 0%,#0d1b2e 50%,#0a1628 100%)", padding: "28px 28px 28px" }}
           >
             <div
               ref={contentRef}
               style={{
-                boxShadow: "0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4)",
                 borderRadius: "12px",
                 overflow: "hidden",
-                background: "#fff",
+                background: "#0f172a",
                 width: "595px",
               }}
             >
