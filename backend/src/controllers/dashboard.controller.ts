@@ -90,7 +90,7 @@ export async function getOverview(req: Request, res: Response) {
       Student.find({ joinedDate: { $gte: start, $lte: end } }, { totalFee: 1, totalPaid: 1, pendingAmount: 1 }).lean(),
       Enquiry.find({ enquiryDate: { $gte: start, $lte: end } }, { status: 1 }).lean(),
       Placement.countDocuments(),
-      Student.find({}, { passoutYear: 1 }).lean(),
+      Student.find({ admissionMonth: { $gte: start.slice(0, 7), $lte: end.slice(0, 7) } }, { passoutYear: 1 }).lean(),
       Enquiry.countDocuments({ status: { $in: ["Pending", "Follow-up"] } }),
       Enquiry.countDocuments({ status: "Converted" }),
       Enquiry.countDocuments({ status: "Not Interested" }),
