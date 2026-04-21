@@ -21,6 +21,8 @@ export interface IStudent extends Document {
   paymentMode: string;
   receiptNo?: string;
   photo?: string | null;
+  studentStatus: "Active" | "Inactive";
+  isRecoverable: boolean;
 }
 
 const StudentSchema = new Schema<IStudent>(
@@ -45,6 +47,8 @@ const StudentSchema = new Schema<IStudent>(
     paymentMode: { type: String, required: true },
     receiptNo: { type: String, default: "" },
     photo: { type: String, default: null },
+    studentStatus: { type: String, enum: ["Active", "Inactive"], default: "Active" },
+    isRecoverable: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

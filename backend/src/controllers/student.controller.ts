@@ -49,7 +49,10 @@ export async function createStudent(req: Request, res: Response) {
       const dupEmail = await Student.findOne({ email: req.body.email });
       if (dupEmail) return res.status(409).json({ message: `Email ${req.body.email} is already registered with another student.` });
     }
-    const student = await Student.create(req.body);
+    // Derive isRecoverable from studentStatus
+    const body = { ...req.body };
+    body.isRecoverable = body.studentStatus !== "Inactive";
+    const student = await Student.create(body);
     res.status(201).json({ student });
   } catch (err: any) {
     if (err.code === 11000) {
@@ -86,6 +89,11 @@ export async function updateStudent(req: Request, res: Response) {
       runValidators: true,
     });
     if (!student) return res.status(404).json({ message: "Student not found" });
+    // Sync isRecoverable whenever studentStatus changes
+    if (req.body.studentStatus !== undefined) {
+      student.isRecoverable = req.body.studentStatus !== "Inactive";
+      await student.save();
+    }
     res.json({ student });
   } catch {
     res.status(500).json({ message: "Failed to update student" });

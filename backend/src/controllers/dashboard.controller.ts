@@ -87,7 +87,7 @@ export async function getOverview(req: Request, res: Response) {
         : Enquiry.find({ enquiryDate: { $gte: yearStart, $lte: yearEnd } }, { enquiryDate: 1 }).lean(),
       Student.find({ joinedDate: { $gte: start, $lte: end } }, { course: 1 }).lean(),
       // Order Summary queries
-      Student.find({ joinedDate: { $gte: start, $lte: end } }, { totalFee: 1, totalPaid: 1, pendingAmount: 1 }).lean(),
+      Student.find({ joinedDate: { $gte: start, $lte: end } }, { totalFee: 1, totalPaid: 1, pendingAmount: 1, isRecoverable: 1 }).lean(),
       Enquiry.find({ enquiryDate: { $gte: start, $lte: end } }, { status: 1 }).lean(),
       Placement.countDocuments(),
       Student.find({ admissionMonth: { $gte: start.slice(0, 7), $lte: end.slice(0, 7) } }, { passoutYear: 1 }).lean(),
@@ -161,19 +161,30 @@ export async function getOverview(req: Request, res: Response) {
     // ── Fee Status (students admitted in range) ───────────────────────────────
     let feeFullyPaid = 0, feePartialPaid = 0, feeNotPaid = 0;
     let feeFullyPaidAmt = 0, feePartialPaidAmt = 0, feeNotPaidAmt = 0;
+    let pendingRecoverable = 0;
+    let nonRecoverableAmt = 0, nonRecoverableCount = 0;
     feeStatusStudents.forEach((s: any) => {
       const paid    = s.totalPaid    || 0;
       const pending = s.pendingAmount || 0;
       const fee     = s.totalFee     || 0;
+      // isRecoverable defaults to true for existing records without the field
+      const recoverable = s.isRecoverable !== false;
       if (pending === 0 && fee > 0) {
         feeFullyPaid++;
         feeFullyPaidAmt += paid;
       } else if (paid > 0 && pending > 0) {
         feePartialPaid++;
         feePartialPaidAmt += paid;
+        if (recoverable) pendingRecoverable += pending;
       } else {
         feeNotPaid++;
         feeNotPaidAmt += fee;
+        if (recoverable && pending > 0) pendingRecoverable += pending;
+      }
+      // Non-recoverable: inactive students with any pending amount
+      if (!recoverable && pending > 0) {
+        nonRecoverableAmt += pending;
+        nonRecoverableCount++;
       }
     });
     const feeTotal = feeFullyPaid + feePartialPaid + feeNotPaid;
@@ -227,7 +238,7 @@ export async function getOverview(req: Request, res: Response) {
       trendEnquiries: trendEnquiriesArr,
       courseEnrollment,
       // Order Summary
-      feeStatus: { total: feeTotal, fullyPaid: feeFullyPaid, partialPaid: feePartialPaid, notPaid: feeNotPaid, fullyPaidAmt: feeFullyPaidAmt, partialPaidAmt: feePartialPaidAmt, notPaidAmt: feeNotPaidAmt },
+      feeStatus: { total: feeTotal, fullyPaid: feeFullyPaid, partialPaid: feePartialPaid, notPaid: feeNotPaid, fullyPaidAmt: feeFullyPaidAmt, partialPaidAmt: feePartialPaidAmt, notPaidAmt: feeNotPaidAmt, pendingRecoverable, nonRecoverableAmt, nonRecoverableCount },
       enquiryStatus: { total: enquiryTotal, converted: enquiryConverted, inProgress: enquiryInProgress, notConverted: enquiryNotConverted, allTimeActive: allTimeActiveEnquiries as number, allTimeConverted: allTimeConvertedEnquiries as number, allTimeClosed: allTimeClosedEnquiries as number, prevTotal: prevEnquiryTotal, prevConverted: prevEnquiryConverted, prevInProgress: prevEnquiryInProgress, prevNotConverted: prevEnquiryNotConverted },
       placementStatus: { total: placementTotalBasis, placed: placementPlaced, inProcess: placementInProcess, notPlaced: placementNotPlaced },
       batchCategories: { freshers: batchFreshers, recent: batchRecent, senior: batchSenior },
