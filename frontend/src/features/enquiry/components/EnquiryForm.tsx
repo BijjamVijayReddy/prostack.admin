@@ -181,7 +181,7 @@ export function EnquiryForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
   }, [enquiryDateValue, setValue]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-3">
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Enquiry Number</label>
         <div className="relative">
@@ -230,7 +230,6 @@ export function EnquiryForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
           <EnvelopeIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400 drop-shadow" />
           <input {...register("email")} placeholder="Email" className="w-full rounded-lg border pl-9 pr-3 py-3 text-sm" />
         </div>
-        <p className="text-xs text-red-500">{errors.email?.message}</p>
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Gender</label>
@@ -268,14 +267,14 @@ export function EnquiryForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
           renderIcon={(opt, size) => <opt.Icon className="h-3.5 w-3.5" style={{ color: opt.color }} />} />
         <p className="text-xs text-red-500">{errors.status?.message}</p>
       </div>
-      <div className="sm:col-span-2">
+      <div className="sm:col-span-3">
         <label className="block text-xs font-medium text-gray-500 mb-1">Notes / Remarks</label>
         <div className="relative">
           <PencilSquareIcon className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400 drop-shadow" />
           <textarea {...register("notes")} placeholder="Notes / Remarks" rows={3} className="w-full rounded-lg border pl-9 pr-3 py-3 text-sm" />
         </div>
       </div>
-      <div className="sm:col-span-2 flex flex-col sm:flex-row gap-3 pt-2">
+      <div className="sm:col-span-3 flex flex-col sm:flex-row gap-3 pt-2">
         <button type="button" onClick={onCancel}
           className="w-full rounded-lg bg-[#C70000] py-2.5 text-sm font-semibold text-white shadow-md shadow-[#C70000]/30 hover:bg-[#a80000] active:scale-95 cursor-pointer transition-all duration-200">
           Cancel

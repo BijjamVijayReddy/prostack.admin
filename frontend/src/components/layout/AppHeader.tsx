@@ -225,13 +225,13 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
   }, [active, dueStudents.length, dueEnquiries.length]);
 
   return (
-    <header className="flex items-center justify-between border-b px-6 py-4" style={{ backgroundColor: "#f3f3f3", borderColor: "#e8e8e8" }}>
+    <header className="flex items-center justify-between border-b px-3 py-3 md:px-6 md:py-4" style={{ backgroundColor: "#f3f3f3", borderColor: "#e8e8e8" }}>
       <div>
-        <h1 className="text-2xl font-semibold">
+        <h1 className="text-lg md:text-2xl font-semibold">
           {capitalize(active === "dashboard" ? "dashboard" : active)}
         </h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {rightSlot}
 
         {/* ── Payment Due Bell ── */}
@@ -250,7 +250,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
           </button>
 
           {bellOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-red-100 bg-red-50">
                 <div className="flex items-center gap-2">
                   <CurrencyRupeeIcon className="h-4 w-4 text-red-500" />
@@ -308,7 +308,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
           </button>
 
           {enquiryBellOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-1rem))] rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-purple-100 bg-purple-50">
                 <div className="flex items-center gap-2">
                   <ClipboardDocumentListIcon className="h-4 w-4 text-purple-500" />
@@ -364,7 +364,7 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
             {firstLetter}
           </div>
 
-          <div className="text-sm leading-tight">
+          <div className="hidden sm:block text-sm leading-tight">
             <p className="font-medium" style={{ color: "#1E3A8A" }}>{userName}</p>
             <span
               className="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold"

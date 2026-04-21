@@ -101,21 +101,27 @@ export function StudentsClient() {
     <div className="space-y-4">
       {toastMsg && <SavedToast message={toastMsg} onClose={() => setToastMsg(null)} />}
       {errorMsg && <ErrorToast message={errorMsg} onClose={() => setErrorMsg(null)} />}
-      <div className="flex items-center justify-between gap-3">
-        <StudentsFilters
-          selectedMonth={selectedMonth}
-          setSelectedMonth={setSelectedMonth}
-          selectedYear={selectedYear}
-          setSelectedYear={setSelectedYear}
-        />
-        <StudentSearchBar students={students} />
-        <Button
-          className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer"
-          onClick={() => setOpen(true)}
-        >
-          <PlusCircleIcon className="h-4 w-4" />
-          New Student
-        </Button>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <StudentsFilters
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:flex-nowrap sm:w-auto">
+          <div className="flex-1 min-w-0 sm:flex-none">
+            <StudentSearchBar students={students} />
+          </div>
+          <Button
+            className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer whitespace-nowrap"
+            onClick={() => setOpen(true)}
+          >
+            <PlusCircleIcon className="h-4 w-4" />
+            New Student
+          </Button>
+        </div>
       </div>
 
       {/* Content */}

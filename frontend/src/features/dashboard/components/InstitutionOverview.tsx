@@ -122,7 +122,7 @@ function getCourseStyle(name: string, idx: number): CourseStyle {
 function OverviewSkeleton() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-xl p-4" style={CARD_STYLE}>
             <Skeleton rounded="rounded-lg" className="mb-2 h-8 w-8" />
@@ -132,7 +132,7 @@ function OverviewSkeleton() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="col-span-2 rounded-xl p-5" style={CARD_STYLE}>
           <Skeleton className="mb-3 h-4 w-36" />
           <Skeleton className="rounded-lg" style={{ height: 248 }} />
@@ -332,7 +332,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
     <div className="flex flex-col gap-4">
 
       {/* ── KPI cards ────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(({ label, value, color, bg, Icon, badgeLabel, compareLabel: cardCompareLabel, showCompare, compare }) => (
           <div key={label} className="rounded-xl p-4" style={CARD_STYLE}>
             <div className="mb-2 flex items-center justify-between">
@@ -433,7 +433,7 @@ export function InstitutionOverview({ range }: InstitutionOverviewProps) {
       </div>
 
       {/* ── Admissions Trend + Program Enrollment ────────────── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="col-span-2 rounded-xl p-5" style={CARD_STYLE}>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>

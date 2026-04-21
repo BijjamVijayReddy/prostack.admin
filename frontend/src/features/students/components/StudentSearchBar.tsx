@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -218,10 +230,11 @@ export function StudentSearchBar({ students }: StudentSearchBarProps) {
     : [];
 
   const showDropdown = focused && q.length >= 2;
+  const isMobile = useIsMobile();
 
   return (
     <>
-      <div ref={containerRef} className="relative w-[480px]">
+      <div ref={containerRef} className="relative w-full sm:w-[480px]">
         {/* Input */}
         <div
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition-all"
@@ -247,8 +260,8 @@ export function StudentSearchBar({ students }: StudentSearchBarProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
-            placeholder="Search by Name, Mobile, Email or Admission No"
-            className="flex-1 bg-transparent text-sm outline-none focus:outline-none focus:ring-0 focus:shadow-none placeholder:text-gray-400"
+            placeholder={isMobile ? "Search by Name, Mobile..." : "Search by Name, Mobile, Email or Admission No"}
+            className="flex-1 min-w-0 bg-transparent text-sm outline-none focus:outline-none focus:ring-0 focus:shadow-none placeholder:text-gray-400 truncate"
             style={{ color: "var(--color-text-primary)", outline: "none", boxShadow: "none" }}
           />
           {query && (

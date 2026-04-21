@@ -132,7 +132,7 @@ export function StudentsFilters({
   setSelectedYear,
 }: StudentsFiltersProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 flex-wrap">
       <CustomSelect options={MONTHS} value={selectedMonth} onChange={setSelectedMonth} />
       <CustomSelect options={YEARS} value={selectedYear} onChange={setSelectedYear} />
     </div>

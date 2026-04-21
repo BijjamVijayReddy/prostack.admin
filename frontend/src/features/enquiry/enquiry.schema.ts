@@ -10,7 +10,7 @@ export const enquirySchema = yup.object({
     .string()
     .matches(/^[0-9]{10}$/, "Enter valid 10 digit mobile number")
     .required("Mobile number is required"),
-  email: yup.string().email("Invalid email").required("Email is required"),
+  email: yup.string().email("Invalid email").optional().default(""),
   gender: yup.string().required("Gender is required"),
   city: yup.string().required("City is required"),
   course: yup.string().required("Course is required"),

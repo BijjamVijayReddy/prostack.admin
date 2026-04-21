@@ -44,9 +44,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         <SessionExpiryModal expiresAt={sessionExpiresAt} onExtend={extendSession} onLogout={logout} />
       )}
       <Sidebar />
-      <main className="ml-20 h-screen flex flex-col" style={{ backgroundColor: "#f3f3f3" }}>
+      <main className="ml-0 md:ml-20 h-screen flex flex-col" style={{ backgroundColor: "#f3f3f3" }}>
         <AppHeader />
-        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">{children}</div>
+        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-20 md:px-6 md:pt-4 md:pb-6">{children}</div>
       </main>
       <Footer />
     </LayoutProvider>

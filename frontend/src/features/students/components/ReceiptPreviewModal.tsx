@@ -246,8 +246,8 @@ prostackacademy@gmail.com`
       {/* Blurred dark backdrop */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-md" />
 
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="relative w-full max-w-2xl rounded-3xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.5)]">
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4">
+        <Dialog.Panel className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.5)] max-h-[95vh] overflow-y-auto">
 
           {/* ── Toolbar ── */}
           <div

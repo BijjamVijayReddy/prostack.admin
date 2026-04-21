@@ -42,8 +42,8 @@ export function PlacementFormModal({ open, onClose, placement, onSaved, onError 
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
 
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[92vh]">
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4">
+        <Dialog.Panel className="w-full sm:max-w-xl rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[92vh]">
 
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">

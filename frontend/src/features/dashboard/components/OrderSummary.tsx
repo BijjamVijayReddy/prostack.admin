@@ -8,7 +8,7 @@ import {
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
 import { DateRange } from "./DateRangeFilter";
-import { fetchOverview, fetchBatchCategories, BatchCategories } from "../dashboard.api";
+import { fetchOverview } from "../dashboard.api";
 import { OverviewData } from "../dashboard.types";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -47,7 +47,7 @@ const CARD_STYLE = {
 // â”€â”€ Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function OrderSkeleton() {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {[0, 1, 2].map((i) => (
         <div key={i} className="rounded-xl p-5" style={CARD_STYLE}>
           <div className="mb-4 flex items-center justify-between">
@@ -112,8 +112,6 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   const [data, setData]       = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
-  const [bc, setBc]           = useState<BatchCategories>({ freshers: 0, recent: 0, senior: 0, currentYear: new Date().getFullYear() });
-
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -123,12 +121,6 @@ export function OrderSummary({ range }: OrderSummaryProps) {
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range.start.getTime(), range.end.getTime()]);
-
-  useEffect(() => {
-    fetchBatchCategories()
-      .then(setBc)
-      .catch(() => { /* keep zeros on error */ });
-  }, []);
 
   const period = getPeriodLabel(range);
 
@@ -145,11 +137,8 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   const fs = data.feeStatus     ?? { total: 0, fullyPaid: 0, partialPaid: 0, notPaid: 0, fullyPaidAmt: 0, partialPaidAmt: 0, notPaidAmt: 0 };
   const es = data.enquiryStatus  ?? { total: 0, converted: 0, inProgress: 0, notConverted: 0 };
 
-  // Use batchCategories from overview response if present, otherwise fall back to separate fetch
-  const activeBc = (data.batchCategories && (data.batchCategories.freshers + data.batchCategories.recent + data.batchCategories.senior) > 0)
-    ? { ...data.batchCategories, currentYear: new Date().getFullYear() }
-    : bc;
-  const currentYear = activeBc.currentYear ?? new Date().getFullYear();
+  const activeBc = data.batchCategories ?? { freshers: 0, recent: 0, senior: 0 };
+  const currentYear = new Date().getFullYear();
 
   // â”€â”€ Fee card segments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const feeSegs = [
@@ -172,7 +161,7 @@ export function OrderSummary({ range }: OrderSummaryProps) {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
       {/* â”€â”€ Monthly Fee Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="rounded-xl p-5" style={CARD_STYLE}>

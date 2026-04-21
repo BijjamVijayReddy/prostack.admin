@@ -73,7 +73,7 @@ export function EnquiryClient() {
     <div className="space-y-4">
       {toastMsg && <SavedToast message={toastMsg} onClose={() => setToastMsg(null)} />}
       {errorMsg && <ErrorToast message={errorMsg} onClose={() => setErrorMsg(null)} />}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <EnquiriesFilters
           selectedMonth={selectedMonth}
           setSelectedMonth={setSelectedMonth}
@@ -83,7 +83,7 @@ export function EnquiryClient() {
           setSelectedStatus={setSelectedStatus}
         />
         <Button
-          className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer"
+          className="flex items-center gap-2 bg-[#023430] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-[#023430]/30 hover:bg-[#012825] hover:shadow-[#023430]/40 active:scale-95 active:shadow-sm transition-all duration-200 ease-in-out cursor-pointer self-start sm:self-auto whitespace-nowrap"
           onClick={() => setOpen(true)}
         >
           <PlusCircleIcon className="h-4 w-4" />

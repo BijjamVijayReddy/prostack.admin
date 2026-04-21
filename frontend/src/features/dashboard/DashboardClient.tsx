@@ -22,7 +22,7 @@ export function DashboardClient() {
 
       {/* INSTITUTION OVERVIEW */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="type-h3 uppercase tracking-widest" style={{ color: "var(--color-text-muted)" }}>
             Institution Overview
           </h2>

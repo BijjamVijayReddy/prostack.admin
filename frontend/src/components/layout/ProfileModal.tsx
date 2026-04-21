@@ -243,8 +243,8 @@ export function ProfileModal({ open, onClose, onSaved }: Props) {
       <Dialog open={open} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
 
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 flex items-end sm:items-center justify-center sm:p-4">
+          <Dialog.Panel className="relative w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl max-h-[95vh] overflow-y-auto">
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
