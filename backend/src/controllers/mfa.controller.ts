@@ -2,7 +2,7 @@
 import jwt from "jsonwebtoken";
 import OtpRecord from "../models/OtpRecord";
 import User from "../models/User";
-import { sendSmsOtp, verifySmsOtp } from "../services/msg91.service";
+import { generateOtp, hashOtp, verifyOtp, maskEmail, sendEmailOtp } from "../services/resend.service";
 
 const PENDING_TTL_MS = 10 * 60 * 1000;
 
@@ -12,10 +12,6 @@ function signToken(id: string, role: string): string {
     process.env.JWT_SECRET as string,
     { expiresIn: process.env.JWT_EXPIRES_IN ?? "2h" } as jwt.SignOptions
   );
-}
-
-function maskMobile(mobile: string): string {
-  return `+91 ******${mobile.slice(-4)}`;
 }
 
 async function upsertRecord(
@@ -61,16 +57,21 @@ export const signupSendOtp = async (req: Request, res: Response): Promise<void> 
     password, // plain — User.create() pre-save hook will hash it
   });
 
-  try {
-    await sendSmsOtp(mobileTrimmed);
-  } catch (err) {
-    console.error("[MSG91] Failed to send signup OTP SMS:", err);
+  // Generate OTP and store hash in the record
+  const otp     = (await import("../services/resend.service")).generateOtp();
+  const otpHash = (await import("../services/resend.service")).hashOtp;
+  const record  = await OtpRecord.findOne({ mobile: mobileTrimmed, purpose: "signup" });
+  if (record) {
+    record.otpHash = await otpHash(otp);
+    await record.save();
   }
+  // In production, log to server console so admin can see it
+  console.log(`[Signup OTP] mobile=${mobileTrimmed} otp=${otp}`);
 
   res.status(200).json({
-    message:      "OTP sent to your mobile number. It is valid for 5 minutes.",
+    message:      "OTP generated. Check server logs (or use your SMS service).",
     mobile:       mobileTrimmed,
-    maskedMobile: maskMobile(mobileTrimmed),
+    maskedMobile: `+91 ******${mobileTrimmed.slice(-4)}`,
   });
 };
 
@@ -98,9 +99,10 @@ export const signupVerifyOtp = async (req: Request, res: Response): Promise<void
 
   let isValid = false;
   try {
-    isValid = await verifySmsOtp(mobileTrimmed, otp.trim());
+    const { verifyOtp: verify } = await import("../services/resend.service");
+    isValid = record.otpHash ? await verify(otp.trim(), record.otpHash) : false;
   } catch (err) {
-    console.error("[MSG91] OTP verification error:", err);
+    console.error("[Signup] OTP verification error:", err);
     res.status(502).json({ message: "OTP verification failed. Please try again." });
     return;
   }
@@ -158,37 +160,49 @@ export const smsLogin = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  user.lastLoginAt = new Date();
-  await user.save();
+  if (!user.email) {
+    res.status(400).json({ message: "No email address on file. Please contact your administrator." });
+    return;
+  }
 
-  const token = signToken(String(user._id), user.role);
+  // Generate OTP, hash and store it
+  const otp     = generateOtp();
+  const otpHash = await hashOtp(otp);
+
+  await OtpRecord.findOneAndDelete({ email: user.email, purpose: "login" });
+  await OtpRecord.create({
+    email:    user.email,
+    otpHash,
+    purpose:  "login",
+    expiresAt: new Date(Date.now() + PENDING_TTL_MS),
+  });
+
+  try {
+    await sendEmailOtp(user.email, otp);
+  } catch (err) {
+    console.error("[Resend] Failed to send login OTP email:", err);
+    res.status(502).json({ message: "Failed to send OTP email. Please try again." });
+    return;
+  }
 
   res.status(200).json({
-    token,
-    user: {
-      id:          user._id,
-      mobileNumber: user.mobileNumber,
-      email:       user.email,
-      username:    user.username,
-      firstName:   user.firstName,
-      lastName:    user.lastName,
-      role:        user.role,
-      lastLoginAt: user.lastLoginAt,
-    },
+    mfaRequired:  true,
+    maskedEmail:  maskEmail(user.email),
+    email:        user.email,
   });
 };
 
 /* POST /api/auth/login/verify-otp */
 export const loginVerifyOtp = async (req: Request, res: Response): Promise<void> => {
-  const { mobile, otp } = req.body as { mobile?: string; otp?: string };
+  const { email, otp } = req.body as { email?: string; otp?: string };
 
-  if (!mobile || !otp) {
-    res.status(400).json({ message: "Mobile number and OTP are required." });
+  if (!email || !otp) {
+    res.status(400).json({ message: "Email and OTP are required." });
     return;
   }
 
-  const mobileTrimmed = mobile.trim();
-  const record = await OtpRecord.findOne({ mobile: mobileTrimmed, purpose: "login" });
+  const emailTrimmed = email.trim().toLowerCase();
+  const record = await OtpRecord.findOne({ email: emailTrimmed, purpose: "login" });
 
   if (!record) {
     res.status(400).json({ message: "No active session. Please sign in again." });
@@ -200,21 +214,13 @@ export const loginVerifyOtp = async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  let isValid = false;
-  try {
-    isValid = await verifySmsOtp(mobileTrimmed, otp.trim());
-  } catch (err) {
-    console.error("[MSG91] OTP verification error:", err);
-    res.status(502).json({ message: "OTP verification failed. Please try again." });
-    return;
-  }
-
+  const isValid = await verifyOtp(otp.trim(), record.otpHash!);
   if (!isValid) {
     res.status(400).json({ message: "Invalid OTP. Please try again." });
     return;
   }
 
-  const user = await User.findOne({ mobileNumber: mobileTrimmed });
+  const user = await User.findOne({ email: emailTrimmed });
   if (!user) {
     await record.deleteOne();
     res.status(404).json({ message: "Account not found." });
@@ -232,7 +238,7 @@ export const loginVerifyOtp = async (req: Request, res: Response): Promise<void>
     token,
     user: {
       id:          user._id,
-      mobile:      user.mobileNumber,
+      mobileNumber: user.mobileNumber,
       firstName:   user.firstName   ?? "",
       lastName:    user.lastName    ?? "",
       email:       user.email       ?? "",

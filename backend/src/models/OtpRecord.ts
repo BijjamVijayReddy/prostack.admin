@@ -1,7 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IOtpRecord extends Document {
-  mobile: string;
+  mobile?: string;
+  email?: string;
+  otpHash?: string;
   purpose: "signup" | "login";
   expiresAt: Date;
   pendingUserData?: Record<string, unknown>;
@@ -11,8 +13,15 @@ const OtpRecordSchema = new Schema<IOtpRecord>(
   {
     mobile: {
       type: String,
-      required: true,
       trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    otpHash: {
+      type: String,
     },
     purpose: {
       type: String,
@@ -33,7 +42,8 @@ const OtpRecordSchema = new Schema<IOtpRecord>(
 
 // TTL index: MongoDB auto-removes expired records
 OtpRecordSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-// One active record per mobile+purpose pair
-OtpRecordSchema.index({ mobile: 1, purpose: 1 }, { unique: true });
+// Sparse indexes for lookup
+OtpRecordSchema.index({ mobile: 1, purpose: 1 }, { sparse: true });
+OtpRecordSchema.index({ email: 1,  purpose: 1 }, { sparse: true });
 
 export default mongoose.model<IOtpRecord>("OtpRecord", OtpRecordSchema);
