@@ -137,34 +137,44 @@ export const signupVerifyOtp = async (req: Request, res: Response): Promise<void
 
 /* POST /api/auth/login */
 export const smsLogin = async (req: Request, res: Response): Promise<void> => {
-  const { mobile, password } = req.body as { mobile?: string; password?: string };
+  const { identifier, password } = req.body as { identifier?: string; password?: string };
 
-  if (!mobile || !password) {
-    res.status(400).json({ message: "Mobile number and password are required." });
+  if (!identifier || !password) {
+    res.status(400).json({ message: "Username/email/mobile and password are required." });
     return;
   }
 
-  const mobileTrimmed = mobile.trim();
-  const user = await User.findOne({ mobileNumber: mobileTrimmed });
+  const id = identifier.trim();
+  const user = await User.findOne({
+    $or: [
+      { mobileNumber: id },
+      { email: id },
+      { username: id },
+    ],
+  });
 
   if (!user || !(await user.comparePassword(password))) {
-    res.status(401).json({ message: "Invalid mobile number or password." });
+    res.status(401).json({ message: "Invalid credentials. Please try again." });
     return;
   }
 
-  await upsertRecord(mobileTrimmed, "login");
+  user.lastLoginAt = new Date();
+  await user.save();
 
-  try {
-    await sendSmsOtp(mobileTrimmed);
-  } catch (err) {
-    console.error("[MSG91] Failed to send login OTP SMS:", err);
-  }
+  const token = signToken(String(user._id), user.role);
 
   res.status(200).json({
-    message:      "Credentials verified. OTP sent to your mobile number.",
-    mobile:       mobileTrimmed,
-    maskedMobile: maskMobile(mobileTrimmed),
-    mfaRequired:  true,
+    token,
+    user: {
+      id:          user._id,
+      mobileNumber: user.mobileNumber,
+      email:       user.email,
+      username:    user.username,
+      firstName:   user.firstName,
+      lastName:    user.lastName,
+      role:        user.role,
+      lastLoginAt: user.lastLoginAt,
+    },
   });
 };
 
