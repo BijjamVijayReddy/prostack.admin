@@ -34,7 +34,8 @@ interface AuthContextType {
   user: AuthUser | null;
   sessionWarning: boolean;
   sessionExpiresAt: number | null;
-  login: (username: string, password: string) => Promise<LoginResult>;
+  login: (identifier: string, password: string) => Promise<LoginResult>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   extendSession: () => Promise<void>;
   getToken: () => string | null;
@@ -127,12 +128,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (username: string, password: string): Promise<LoginResult> => {
+    async (identifier: string, password: string): Promise<LoginResult> => {
       try {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ identifier, password }),
         });
 
         if (res.ok) {
@@ -194,8 +195,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getToken = useCallback(() => localStorage.getItem(TOKEN_KEY), []);
 
+  const loginWithToken = useCallback(
+    async (token: string): Promise<void> => {
+      localStorage.setItem(TOKEN_KEY, token);
+      const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (meRes.ok) {
+        const meData = await meRes.json() as { user: AuthUser & { _id?: string } };
+        const u = meData.user;
+        setUser({ ...u, id: u._id ?? u.id });
+      }
+      setIsAuthenticated(true);
+      scheduleExpiry(token);
+    },
+    [scheduleExpiry]
+  );
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, authChecked, user, sessionWarning, sessionExpiresAt, login, logout, extendSession, getToken, setUser }}>
+    <AuthContext.Provider value={{ isAuthenticated, authChecked, user, sessionWarning, sessionExpiresAt, login, loginWithToken, logout, extendSession, getToken, setUser }}>
       {children}
     </AuthContext.Provider>
   );
