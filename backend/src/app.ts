@@ -14,10 +14,12 @@ const app = express();
 // Always allow localhost for local dev (even when hitting the production Render backend).
 // In production also allow: the explicit FRONTEND_ORIGIN env var + all *.vercel.app previews.
 const allowedOrigins: (string | RegExp)[] = [
-  "http://localhost:3000", // local dev
-  /\.vercel\.app$/,        // Vercel preview deployments
+  "http://localhost:3000",       // local dev
+  "https://prostack-admin.com",  // production domain
+  "https://www.prostack-admin.com",
+  /\.vercel\.app$/,              // Vercel preview deployments
 ];
-// Support multiple comma-separated origins: e.g. "https://prostack-admin.com,https://www.prostack-admin.com"
+// Support additional comma-separated origins via env var
 if (process.env.FRONTEND_ORIGIN) {
   process.env.FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean).forEach((o) => {
     allowedOrigins.push(o);
