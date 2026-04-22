@@ -7,7 +7,6 @@ import {
   CalendarIcon,
   UserIcon,
   PhoneIcon,
-  EnvelopeIcon,
   MapPinIcon,
   PencilSquareIcon,
   ChevronDownIcon,
@@ -223,13 +222,6 @@ export function EnquiryForm({ onSubmit, onCancel, defaultValues, isSubmitting }:
           <input {...register("mobile")} placeholder="10-digit number" maxLength={10} className="flex-1 px-3 py-3 text-sm outline-none bg-white" />
         </div>
         <p className="text-xs text-red-500">{errors.mobile?.message}</p>
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
-        <div className="relative">
-          <EnvelopeIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400 drop-shadow" />
-          <input {...register("email")} placeholder="Email" className="w-full rounded-lg border pl-9 pr-3 py-3 text-sm" />
-        </div>
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Gender</label>
