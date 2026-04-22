@@ -28,10 +28,22 @@ export async function getNextNumber(req: Request, res: Response) {
 // GET /api/students
 export async function getStudents(req: Request, res: Response) {
   try {
-    const students = await Student.find().sort({ createdAt: -1 }).lean();
+    // Exclude 'photo' (base64 blob) from list — loaded separately on edit
+    const students = await Student.find().select("-photo").sort({ createdAt: -1 }).lean();
     res.json({ students });
   } catch {
     res.status(500).json({ message: "Failed to fetch students" });
+  }
+}
+
+// GET /api/students/:id
+export async function getStudentById(req: Request, res: Response) {
+  try {
+    const student = await Student.findById(req.params.id).lean();
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.json({ student });
+  } catch {
+    res.status(500).json({ message: "Failed to fetch student" });
   }
 }
 

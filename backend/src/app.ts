@@ -43,7 +43,7 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 // Body parser — 5 MB to allow base64 photo uploads (must be after CORS)
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "15mb" }));
 
 // Rate limiter — only on login, only in production
 const loginLimiter = rateLimit({

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fetchStudents } from "./students.api";
+import { fetchStudents, fetchStudent } from "./students.api";
 import { Student } from "./students.types";
 import { StudentsFilters } from "./components/StudentsFilters";
 import { StudentsTable } from "./components/StudentsTable";
@@ -74,6 +74,7 @@ export function StudentsClient() {
   const [open, setOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [receiptStudent, setReceiptStudent] = useState<Student | null>(null);
+  const [receiptAutoSend, setReceiptAutoSend] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -144,7 +145,14 @@ export function StudentsClient() {
       ) : (
         <StudentsTable
           data={filteredStudents}
-          onEdit={(student) => setEditStudent(student)}
+          onEdit={async (student) => {
+            try {
+              const full = await fetchStudent(student._id!);
+              setEditStudent(full);
+            } catch {
+              setEditStudent(student);
+            }
+          }}
           onReceipt={(student) => setReceiptStudent(student)}
         />
       )}
@@ -152,7 +160,14 @@ export function StudentsClient() {
       <StudentFormModal
         open={open}
         onClose={() => setOpen(false)}
-        onSaved={(msg) => { loadStudents(); setToastMsg(msg); }}
+        onSaved={(msg, created) => {
+          loadStudents();
+          setToastMsg(msg);
+          if (created) {
+            setReceiptStudent(created);
+            setReceiptAutoSend(true);
+          }
+        }}
         onError={(msg) => setErrorMsg(msg)}
       />
       {/* Edit student modal */}
@@ -167,7 +182,8 @@ export function StudentsClient() {
       <ReceiptPreviewModal
         open={!!receiptStudent}
         student={receiptStudent}
-        onClose={() => setReceiptStudent(null)}
+        autoSend={receiptAutoSend}
+        onClose={() => { setReceiptStudent(null); setReceiptAutoSend(false); }}
       />
     </div>
   );

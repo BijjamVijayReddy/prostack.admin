@@ -14,7 +14,18 @@ export function StudentPhotoUpload({ photo, setPhoto }: Props) {
   function handleFile(file: File) {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPhoto(reader.result as string);
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 200;
+        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setPhoto(canvas.toDataURL("image/jpeg", 0.75));
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   }

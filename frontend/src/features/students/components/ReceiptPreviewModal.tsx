@@ -1,15 +1,18 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Dialog } from "@headlessui/react";
-import { XMarkIcon, ArrowDownTrayIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, ArrowDownTrayIcon, PaperAirplaneIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Student } from "../students.types";
+import { sendReceiptEmail } from "../students.api";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   student: Student | null;
+  /** When true, automatically send the receipt email as soon as the modal renders */
+  autoSend?: boolean;
 }
 
 function fmt(n: number) {
@@ -179,44 +182,51 @@ function ReceiptContent({ student }: { student: Student }) {
 }
 
 /* ── Modal wrapper ─────────────────────────────────────────────────────── */
-export function ReceiptPreviewModal({ open, onClose, student }: Props) {
+export function ReceiptPreviewModal({ open, onClose, student, autoSend = false }: Props) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [sendStatus, setSendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sendError,  setSendError]  = useState("");
 
-  const handleSendEmail = () => {
-    if (!student) return;
-    const isPending = student.pendingAmount > 0;
-    const receiptNo = student.receiptNo || `PS-${student.admissionNo.replace(/\D/g, "").slice(-6)}`;
-    const subject = encodeURIComponent(`${student.course} Payment Invoice From Prostack - Admin`);
-    const body = encodeURIComponent(
-`Dear ${student.name},
+  /** Capture receipt div → PDF base64 → POST to backend */
+  const doSend = useCallback(async () => {
+    if (!student?._id) return;
+    setSendStatus("sending");
+    setSendError("");
+    try {
+      let pdfBase64: string | undefined;
+      const el = document.getElementById("receipt-print-area");
+      if (el) {
+        const html2canvas = (await import("html2canvas")).default;
+        const jsPDF        = (await import("jspdf")).jsPDF;
+        const canvas = await html2canvas(el, { scale: 1.5, useCORS: true, backgroundColor: null });
+        const imgData = canvas.toDataURL("image/jpeg", 0.82);
+        const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [595, 842] });
+        pdf.addImage(imgData, "JPEG", 0, 0, 595, 842);
+        // strip the data-URI prefix to get raw base64
+        pdfBase64 = pdf.output("datauristring").split(",")[1];
+      }
+      await sendReceiptEmail(student._id, pdfBase64);
+      setSendStatus("sent");
+    } catch (err: any) {
+      setSendError(err.message ?? "Failed to send email");
+      setSendStatus("error");
+    }
+  }, [student]);
 
-We are Happy to Welcome you to Pro Stack Academy! You've taken an Important Step Toward Enhancing your Skills, and we're Excited to have you on Board. Our team is dedicated to Providing you with the Best Possible Learning Experience, and We're Here to Support you Throughout your Journey.
+  // Auto-send on first render when autoSend=true
+  useEffect(() => {
+    if (open && autoSend && sendStatus === "idle") {
+      // Small delay so the receipt DOM is fully rendered
+      const t = setTimeout(() => { void doSend(); }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [open, autoSend, doSend, sendStatus]);
 
-Please Find Attached the Payment Invoice for the ${student.course} course.
-
-Details of your transaction:
-
-Invoice No: ${receiptNo}
-Total Amount: ₹ ${student.totalFee.toLocaleString("en-IN")} /-
-Paid Amount: ₹ ${student.totalPaid.toLocaleString("en-IN")} /-
-Pending Amount: ${isPending ? `₹ ${student.pendingAmount.toLocaleString("en-IN")} /-` : "₹ NA/-"}
-Due Date: ${isPending && student.dueDate ? fmtDate(student.dueDate) : "NA"}
-
-If you have any Questions or need Further Assistance, Please do not Hesitate to Contact Us.
-
---
-
-Thanks and regards,
-
-ADMIN
-Pro Stack Academy
-prostackacademy@gmail.com`
-    );
-    const to = student.email ?? "";
-    const cc = "prostackacademy@gmail.com";
-    const mailto = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
-    window.open(mailto, "_blank");
-  };
+  // Reset status whenever a new student is shown
+  useEffect(() => {
+    setSendStatus("idle");
+    setSendError("");
+  }, [student?._id]);
 
   const handlePrint = useReactToPrint({
     contentRef,
@@ -282,12 +292,26 @@ prostackacademy@gmail.com`
                 Download PDF
               </button>
               <button
-                onClick={handleSendEmail}
-                className="flex items-center gap-1.5 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                onClick={() => { void doSend(); }}
+                disabled={sendStatus === "sending" || sendStatus === "sent"}
+                className="flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                style={
+                  sendStatus === "sent"
+                    ? { background: "rgba(74,222,128,0.15)", borderColor: "rgba(74,222,128,0.4)", color: "#4ade80" }
+                    : sendStatus === "error"
+                    ? { background: "rgba(248,113,113,0.15)", borderColor: "rgba(248,113,113,0.4)", color: "#f87171" }
+                    : { background: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.2)", color: "#fff" }
+                }
               >
-                <PaperAirplaneIcon className="h-3.5 w-3.5" />
-                Send
+                {sendStatus === "sending" && <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3V0a12 12 0 100 24v-4l-3 3 3 3v4A12 12 0 014 12z"/></svg>}
+                {sendStatus === "sent"    && <CheckCircleIcon className="h-3.5 w-3.5" />}
+                {sendStatus === "error"   && <ExclamationCircleIcon className="h-3.5 w-3.5" />}
+                {sendStatus === "idle"    && <PaperAirplaneIcon className="h-3.5 w-3.5" />}
+                {sendStatus === "sending" ? "Sending…" : sendStatus === "sent" ? "Email Sent!" : sendStatus === "error" ? "Retry Send" : "Send Email"}
               </button>
+              {sendStatus === "error" && sendError && (
+                <span className="text-[10px] text-red-400 max-w-[120px] truncate" title={sendError}>{sendError}</span>
+              )}
               <button
                 onClick={onClose}
                 className="ml-1 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-gray-400 hover:bg-red-500/30 hover:text-white transition-all cursor-pointer"

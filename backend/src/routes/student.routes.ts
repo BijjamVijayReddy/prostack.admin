@@ -2,6 +2,7 @@ import { Router } from "express";
 import { protect } from "../middleware/auth.middleware";
 import {
   getStudents,
+  getStudentById,
   getNextNumber,
   createStudent,
   updateStudent,
@@ -13,6 +14,7 @@ const router = Router();
 
 router.get("/next-number", protect, getNextNumber);
 router.get("/", protect, getStudents);
+router.get("/:id", protect, getStudentById);
 router.post("/", protect, createStudent);
 router.put("/:id", protect, updateStudent);
 router.delete("/:id", protect, deleteStudent);

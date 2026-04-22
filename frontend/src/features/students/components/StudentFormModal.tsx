@@ -12,7 +12,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   student?: Student | null;
-  onSaved?: (message: string) => void;
+  onSaved?: (message: string, createdStudent?: Student) => void;
   onError?: (message: string) => void;
 }
 
@@ -49,7 +49,7 @@ export function StudentFormModal({ open, onClose, student, onSaved, onError }: P
         await updateStudent(student._id, data);
         onSaved?.(`${data.name}'s details have been updated successfully.`);
       } else {
-        await createStudent(data);
+        const created = await createStudent(data);
         // If placed, auto-create a placement record
         if (data.placementStatus === "Placed") {
           const nameParts = (data.name as string).trim().split(" ");
@@ -69,7 +69,7 @@ export function StudentFormModal({ open, onClose, student, onSaved, onError }: P
             photo: data.photo ?? null,
           });
         }
-        onSaved?.(`${data.name} has been added as a new student successfully.`);
+        onSaved?.(`${data.name} has been added as a new student successfully.`, created);
       }
       onClose();
     } catch (err: any) {

@@ -63,3 +63,22 @@ export async function deleteStudent(id: string): Promise<void> {
     throw new Error(data.message ?? "Failed to delete student");
   }
 }
+
+export async function fetchStudent(id: string): Promise<Student> {
+  const res = await fetch(`${API_BASE}/api/students/${id}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch student");
+  const data = await res.json() as { student: Student };
+  return data.student;
+}
+
+export async function sendReceiptEmail(studentId: string, pdfBase64?: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/students/${studentId}/send-receipt`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ pdfBase64 }),
+  });
+  const data = await res.json() as { message?: string };
+  if (!res.ok) throw new Error(data.message ?? "Failed to send receipt email");
+}
