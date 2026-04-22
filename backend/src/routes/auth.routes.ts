@@ -1,28 +1,26 @@
 import { Router } from "express";
 import { login, register, getMe, updateProfile, refreshToken, findUser, resetPassword } from "../controllers/auth.controller";
-import { signupSendOtp, signupVerifyOtp, mfaLogin, mfaLoginVerifyOtp } from "../controllers/mfa.controller";
+import { signupSendOtp, signupVerifyOtp, smsLogin, loginVerifyOtp } from "../controllers/mfa.controller";
 import { protect } from "../middleware/auth.middleware";
 
 const router = Router();
 
-// ── MFA Signup ─────────────────────────────────────────────
-router.post("/signup/send-otp",    signupSendOtp);
-router.post("/signup/verify-otp",  signupVerifyOtp);
+// ── SMS MFA Signup ─────────────────────────────────────────
+router.post("/signup/send-otp",   signupSendOtp);
+router.post("/signup/verify-otp", signupVerifyOtp);
 
-// ── MFA Login ──────────────────────────────────────────────
-router.post("/mfa/login",              mfaLogin);
-router.post("/mfa/login/verify-otp",   mfaLoginVerifyOtp);
+// ── SMS MFA Login ──────────────────────────────────────────
+router.post("/login",            smsLogin);         // mobile + password → send OTP
+router.post("/login/verify-otp", loginVerifyOtp);   // mobile + OTP → JWT
 
-// ── Legacy (password-only) ─────────────────────────────────
-// Public
-router.post("/login", login);
-router.post("/register", register);
-router.post("/find-user", findUser);
+// ── Legacy admin utilities ─────────────────────────────────
+router.post("/register",       register);
+router.post("/find-user",      findUser);
 router.post("/reset-password", resetPassword);
 
-// Protected
-router.get("/me", protect, getMe);
+// ── Protected ──────────────────────────────────────────────
+router.get("/me",       protect, getMe);
 router.post("/refresh", protect, refreshToken);
-router.put("/profile", protect, updateProfile);
+router.put("/profile",  protect, updateProfile);
 
 export default router;

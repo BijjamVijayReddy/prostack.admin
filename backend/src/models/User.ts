@@ -2,11 +2,11 @@ import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IUser extends Document {
-  firstName: string;
-  lastName: string;
-  email: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   mobileNumber: string;
-  username: string;
+  username?: string;
   password: string;
   role: string;
   isVerified: boolean;
@@ -18,18 +18,16 @@ const UserSchema = new Schema<IUser>(
   {
     firstName: {
       type: String,
-      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,   // allows multiple null values
       trim: true,
       lowercase: true,
     },
@@ -41,8 +39,8 @@ const UserSchema = new Schema<IUser>(
     },
     username: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,   // allows multiple null values
       trim: true,
       lowercase: true,
     },

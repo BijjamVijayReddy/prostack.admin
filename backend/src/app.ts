@@ -57,10 +57,9 @@ const otpLimiter = rateLimit({
 });
 
 // Routes
-app.use("/api/auth/login", loginLimiter);
-app.use("/api/auth/signup/send-otp",       otpLimiter);
-app.use("/api/auth/mfa/login",             loginLimiter);
-app.use("/api/auth/mfa/login/verify-otp",  otpLimiter);
+app.use("/api/auth/login",            loginLimiter);
+app.use("/api/auth/login/verify-otp", otpLimiter);
+app.use("/api/auth/signup/send-otp",  otpLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/enquiries", enquiryRoutes);
