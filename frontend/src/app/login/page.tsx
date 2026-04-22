@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -18,6 +18,7 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   KeyIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
@@ -76,12 +77,62 @@ function Spinner() {
   );
 }
 
+/* --- OTP Boxes ------------------------------------------ */
+const OTP_LEN = 6;
+function OtpBoxes({ value, onChange, disabled, hasError }: {
+  value: string[]; onChange: (v: string[]) => void; disabled?: boolean; hasError?: boolean;
+}) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const handleKey = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (value[idx]) { const n = [...value]; n[idx] = ""; onChange(n); }
+      else if (idx > 0) refs.current[idx - 1]?.focus();
+    }
+  };
+  const handleChange = (idx: number, raw: string) => {
+    const digit = raw.replace(/\D/g, "").slice(-1);
+    const n = [...value]; n[idx] = digit; onChange(n);
+    if (digit && idx < OTP_LEN - 1) refs.current[idx + 1]?.focus();
+  };
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LEN);
+    if (!pasted) return;
+    e.preventDefault();
+    const n = Array(OTP_LEN).fill("");
+    pasted.split("").forEach((d, i) => { n[i] = d; });
+    onChange(n);
+    refs.current[Math.min(pasted.length, OTP_LEN - 1)]?.focus();
+  };
+  const border = hasError
+    ? "border-red-500 focus:ring-red-500/40"
+    : "border-white/10 focus:border-indigo-500 focus:ring-indigo-500/30";
+  return (
+    <div className="flex gap-2 justify-center">
+      {Array.from({ length: OTP_LEN }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { refs.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={value[i] ?? ""}
+          disabled={disabled}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKey(i, e)}
+          onPaste={handlePaste}
+          className={`h-12 w-11 rounded-xl border bg-white/5 text-center text-lg font-bold text-white outline-none transition focus:ring-2 disabled:opacity-50 ${border}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* --- Login Page ----------------------------------------- */
-type Mode = "login" | "find" | "reset";
+type Mode = "login" | "otp" | "find" | "reset";
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const router    = useRouter();
+  const { loginWithToken } = useAuth();
+  const router = useRouter();
 
   const [mode,            setMode]            = useState<Mode>("login");
   const [showPassword,    setShowPassword]    = useState(false);
@@ -92,7 +143,21 @@ export default function LoginPage() {
   const [foundName,       setFoundName]       = useState("");
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
+  /* OTP state */
+  const [otpEmail,   setOtpEmail]   = useState("");
+  const [otpMasked,  setOtpMasked]  = useState("");
+  const [otpDigits,  setOtpDigits]  = useState<string[]>(Array(OTP_LEN).fill(""));
+  const [otpError,   setOtpError]   = useState("");
+  const [countdown,  setCountdown]  = useState(0);
+  const credRef = useRef<{ identifier: string; password: string } | null>(null);
+
   useEffect(() => { document.title = "ProStack - Login"; }, []);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
 
   const { register: regLogin, handleSubmit: handleLogin, setError: setLoginError, formState: { errors: loginErrors } } =
     useForm<LoginValues>({ resolver: yupResolver(loginSchema) });
@@ -103,17 +168,85 @@ export default function LoginPage() {
   const { register: regReset, handleSubmit: handleReset, formState: { errors: resetErrors }, reset: resetResetForm } =
     useForm<ResetValues>({ resolver: yupResolver(resetSchema) });
 
-  const onLogin = async (data: LoginValues) => {
-    setIsLoading(true);
-    const result = await login(data.identifier, data.password);
-    if (result === "ok") {
-      router.replace("/");
-    } else if (result === "invalid") {
-      setLoginError("identifier", { message: " " });
-      setLoginError("password",   { message: " " });
+  /* Request OTP (initial login or resend) */
+  const requestOtp = useCallback(async (identifier: string, password: string): Promise<boolean> => {
+    const res  = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, password }),
+    });
+    const json = await res.json() as { mfaRequired?: boolean; email?: string; maskedEmail?: string; message?: string };
+
+    if (res.ok && json.mfaRequired) {
+      setOtpEmail(json.email ?? "");
+      setOtpMasked(json.maskedEmail ?? "your email");
+      return true;
+    }
+    if (res.status === 401) {
       setToast({ message: "Invalid credentials. Please try again.", type: "error" });
     } else {
+      setToast({ message: json.message ?? "Unable to reach server. Please try again later.", type: "error" });
+    }
+    return false;
+  }, []);
+
+  const onLogin = async (data: LoginValues) => {
+    setIsLoading(true);
+    try {
+      credRef.current = { identifier: data.identifier, password: data.password };
+      const ok = await requestOtp(data.identifier, data.password);
+      if (ok) {
+        setOtpDigits(Array(OTP_LEN).fill(""));
+        setOtpError("");
+        setCountdown(30);
+        setMode("otp");
+      } else {
+        setLoginError("identifier", { message: " " });
+        setLoginError("password",   { message: " " });
+      }
+    } catch {
       setToast({ message: "Unable to reach server. Please try again later.", type: "error" });
+    }
+    setIsLoading(false);
+  };
+
+  const onOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const otp = otpDigits.join("");
+    if (otp.length < OTP_LEN) { setOtpError("Please enter the complete 6-digit OTP."); return; }
+    setIsLoading(true); setOtpError("");
+    try {
+      const res  = await fetch(`${API_BASE}/api/auth/login/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: otpEmail, otp }),
+      });
+      const json = await res.json() as { token?: string; message?: string };
+      if (res.ok && json.token) {
+        await loginWithToken(json.token);
+        router.replace("/");
+      } else {
+        setOtpError(json.message ?? "Invalid OTP. Please try again.");
+      }
+    } catch {
+      setOtpError("Unable to reach server. Please try again later.");
+    }
+    setIsLoading(false);
+  };
+
+  const onOtpResend = async () => {
+    if (countdown > 0 || !credRef.current) return;
+    setIsLoading(true);
+    try {
+      const ok = await requestOtp(credRef.current.identifier, credRef.current.password);
+      if (ok) {
+        setOtpDigits(Array(OTP_LEN).fill(""));
+        setOtpError("");
+        setCountdown(30);
+        setToast({ message: "OTP resent to your email.", type: "success" });
+      }
+    } catch {
+      setToast({ message: "Unable to resend OTP.", type: "error" });
     }
     setIsLoading(false);
   };
@@ -173,6 +306,7 @@ export default function LoginPage() {
             </div>
             <div className="text-center">
               {mode === "login" && (<><h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1><p className="mt-1 text-sm text-gray-400">Sign in to your ProStack account</p></>)}
+              {mode === "otp"   && (<><h1 className="text-2xl font-bold tracking-tight text-white">Check your email</h1><p className="mt-1 text-sm text-gray-400">We sent a 6-digit OTP to <span className="text-white font-medium">{otpMasked}</span></p></>)}
               {mode === "find"  && (<><h1 className="text-2xl font-bold tracking-tight text-white">Reset Password</h1><p className="mt-1 text-sm text-gray-400">Enter your username, email or mobile to continue</p></>)}
               {mode === "reset" && (<><h1 className="text-2xl font-bold tracking-tight text-white">New Password</h1><p className="mt-1 text-sm text-gray-400">Set a new password for your account</p></>)}
             </div>
@@ -215,8 +349,46 @@ export default function LoginPage() {
 
               <button type="submit" disabled={isLoading}
                 className="w-full rounded-xl bg-[#023430] py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#012825] active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2">
-                {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Signing in...</span> : "Sign In"}
+                {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Sending OTP...</span> : "Sign In"}
               </button>
+            </form>
+          )}
+
+          {/* OTP */}
+          {mode === "otp" && (
+            <form onSubmit={onOtpSubmit} className="space-y-6" noValidate>
+
+              {/* Email icon banner */}
+              <div className="flex items-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3">
+                <EnvelopeIcon className="h-5 w-5 shrink-0 text-indigo-400" />
+                <div>
+                  <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wide">OTP sent</p>
+                  <p className="text-sm text-white">{otpMasked}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider text-center">Enter 6-digit OTP</label>
+                <OtpBoxes value={otpDigits} onChange={setOtpDigits} disabled={isLoading} hasError={!!otpError} />
+                {otpError && <p className="text-xs text-red-400 text-center">{otpError}</p>}
+              </div>
+
+              <button type="submit" disabled={isLoading}
+                className="w-full rounded-xl bg-[#023430] py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#012825] active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Verifying...</span> : "Verify OTP"}
+              </button>
+
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <button type="button"
+                  onClick={() => { setMode("login"); setOtpDigits(Array(OTP_LEN).fill("")); setOtpError(""); }}
+                  className="flex items-center gap-1 hover:text-white transition cursor-pointer">
+                  <ArrowLeftIcon className="h-3.5 w-3.5" />Back
+                </button>
+                <button type="button" onClick={onOtpResend} disabled={countdown > 0 || isLoading}
+                  className="text-indigo-400 hover:text-indigo-300 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
+                </button>
+              </div>
             </form>
           )}
 
