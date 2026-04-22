@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Student } from "../models/Student";
+import { sendPaymentReceiptEmail } from "../services/resend.service";
 
 // GET /api/students/next-number
 // Returns the next auto-generated admissionNo and receiptNo for the current month
@@ -109,5 +110,39 @@ export async function deleteStudent(req: Request, res: Response) {
     res.json({ message: "Student deleted" });
   } catch {
     res.status(500).json({ message: "Failed to delete student" });
+  }
+}
+
+// POST /api/students/:id/send-receipt
+export async function sendReceipt(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const { pdfBase64 } = req.body as { pdfBase64?: string };
+
+    const student = await Student.findById(id).lean();
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    if (!student.email) {
+      return res.status(400).json({ message: "Student has no email address on file." });
+    }
+
+    const receiptNo = student.receiptNo || `PS-${student.admissionNo.replace(/\D/g, "").slice(-6)}`;
+
+    await sendPaymentReceiptEmail({
+      studentName:   student.name,
+      studentEmail:  student.email,
+      course:        student.course,
+      receiptNo,
+      totalFee:      student.totalFee,
+      totalPaid:     student.totalPaid,
+      pendingAmount: student.pendingAmount,
+      dueDate:       student.dueDate,
+      pdfBase64,
+    });
+
+    res.json({ message: "Receipt email sent successfully." });
+  } catch (err: any) {
+    console.error("[sendReceipt]", err);
+    res.status(502).json({ message: err.message ?? "Failed to send receipt email." });
   }
 }
