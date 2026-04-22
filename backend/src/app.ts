@@ -17,8 +17,11 @@ const allowedOrigins: (string | RegExp)[] = [
   "http://localhost:3000", // local dev
   /\.vercel\.app$/,        // Vercel preview deployments
 ];
+// Support multiple comma-separated origins: e.g. "https://prostack-admin.com,https://www.prostack-admin.com"
 if (process.env.FRONTEND_ORIGIN) {
-  allowedOrigins.push(process.env.FRONTEND_ORIGIN); // e.g. https://prostack-xyz.vercel.app
+  process.env.FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean).forEach((o) => {
+    allowedOrigins.push(o);
+  });
 }
 
 const corsOptions: cors.CorsOptions = {
