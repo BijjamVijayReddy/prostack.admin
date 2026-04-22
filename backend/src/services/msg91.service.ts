@@ -1,5 +1,6 @@
 import axios from "axios";
 
+const TEMPLATE_ID  = "69e86bdf1321e5c56301e0f2";
 const OTP_API_BASE = "https://control.msg91.com/api/v5/otp";
 
 function toFullMobile(mobile: string): string {
@@ -32,8 +33,8 @@ export async function sendSmsOtp(mobile: string): Promise<void> {
     const res = await axios.post(
       OTP_API_BASE,
       {
-        mobile:     toFullMobile(mobile),
-        otp_length: 6,
+        mobile:      toFullMobile(mobile),
+        template_id: TEMPLATE_ID,
       },
       {
         headers: {
