@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, getMe, updateProfile, refreshToken, findUser, resetPassword } from "../controllers/auth.controller";
+import { login, register, getMe, updateProfile, refreshToken, findUser, resetPassword, resetVerifyOtp } from "../controllers/auth.controller";
 import { signupSendOtp, signupVerifyOtp, smsLogin, loginVerifyOtp } from "../controllers/mfa.controller";
 import { protect } from "../middleware/auth.middleware";
 
@@ -14,9 +14,10 @@ router.post("/login",            smsLogin);         // mobile + password → sen
 router.post("/login/verify-otp", loginVerifyOtp);   // mobile + OTP → JWT
 
 // ── Legacy admin utilities ─────────────────────────────────
-router.post("/register",       register);
-router.post("/find-user",      findUser);
-router.post("/reset-password", resetPassword);
+router.post("/register",                   register);
+router.post("/find-user",                  findUser);
+router.post("/reset-password/verify-otp",  resetVerifyOtp);
+router.post("/reset-password",             resetPassword);
 
 // ── Protected ──────────────────────────────────────────────
 router.get("/me",       protect, getMe);

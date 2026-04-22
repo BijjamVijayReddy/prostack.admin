@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
+import OtpRecord from "../models/OtpRecord";
+import { generateOtp, hashOtp, verifyOtp, maskEmail, sendEmailOtp } from "../services/resend.service";
 
 const signToken = (id: string, role: string): string => {
   return jwt.sign(
@@ -197,7 +199,7 @@ export const updateProfile = async (
   res.status(200).json({ user: updated });
 };
 
-// POST /api/auth/find-user  (public — check if identifier exists for password reset)
+// POST /api/auth/find-user  (public — check if identifier exists, then send OTP)
 export const findUser = async (req: Request, res: Response): Promise<void> => {
   const { identifier } = req.body as { identifier?: string };
   if (!identifier || !identifier.trim()) {
@@ -211,35 +213,110 @@ export const findUser = async (req: Request, res: Response): Promise<void> => {
       { email: val },
       { mobileNumber: identifier.trim() },
     ],
-  }).select("firstName lastName");
+  }).select("firstName lastName email");
 
   if (!user) {
     res.status(404).json({ found: false, message: "No account found with that username, email, or mobile number." });
     return;
   }
-  res.status(200).json({ found: true, name: `${user.firstName} ${user.lastName}` });
-};
 
-// POST /api/auth/reset-password  (public — reset password by identifier)
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
-  const { identifier, newPassword } = req.body as { identifier?: string; newPassword?: string };
-  if (!identifier || !newPassword || newPassword.trim().length < 6) {
-    res.status(400).json({ message: "Identifier and a new password (min 6 chars) are required." });
+  if (!user.email) {
+    res.status(400).json({ found: false, message: "No email address on file for this account. Please contact your administrator." });
     return;
   }
-  const val = identifier.trim().toLowerCase();
-  const user = await User.findOne({
-    $or: [
-      { username: val },
-      { email: val },
-      { mobileNumber: identifier.trim() },
-    ],
+
+  // Generate OTP and store hash
+  const otp     = generateOtp();
+  const otpHash = await hashOtp(otp);
+  await OtpRecord.findOneAndDelete({ email: user.email, purpose: "login" });
+  await OtpRecord.create({
+    email:     user.email,
+    otpHash,
+    purpose:   "login",
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  if (!user) {
-    res.status(404).json({ message: "No account found with that identifier." });
+  try {
+    await sendEmailOtp(user.email, otp);
+  } catch (err) {
+    console.error("[Resend] Failed to send reset OTP:", err);
+    res.status(502).json({ message: "Failed to send OTP email. Please try again." });
     return;
   }
+
+  res.status(200).json({
+    found:       true,
+    name:        `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+    email:       user.email,
+    maskedEmail: maskEmail(user.email),
+  });
+};
+
+// POST /api/auth/reset-password/verify-otp  (verify OTP before allowing reset)
+export const resetVerifyOtp = async (req: Request, res: Response): Promise<void> => {
+  const { email, otp } = req.body as { email?: string; otp?: string };
+  if (!email || !otp) {
+    res.status(400).json({ message: "Email and OTP are required." });
+    return;
+  }
+
+  const emailTrimmed = email.trim().toLowerCase();
+  const record = await OtpRecord.findOne({ email: emailTrimmed, purpose: "login" });
+
+  if (!record) {
+    res.status(400).json({ message: "No active OTP session. Please request a new one." });
+    return;
+  }
+  if (record.expiresAt < new Date()) {
+    await record.deleteOne();
+    res.status(400).json({ message: "OTP expired. Please request a new one." });
+    return;
+  }
+
+  const isValid = await verifyOtp(otp.trim(), record.otpHash!);
+  if (!isValid) {
+    res.status(400).json({ message: "Invalid OTP. Please try again." });
+    return;
+  }
+
+  // Issue a short-lived reset token so the client can submit the new password
+  const resetToken = jwt.sign(
+    { email: emailTrimmed, purpose: "password-reset" },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "10m" }
+  );
+
+  await record.deleteOne();
+  res.status(200).json({ verified: true, resetToken });
+};
+
+// POST /api/auth/reset-password  (public — reset password using verified resetToken)
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { resetToken, newPassword } = req.body as { resetToken?: string; newPassword?: string };
+  if (!resetToken || !newPassword || newPassword.trim().length < 6) {
+    res.status(400).json({ message: "Reset token and a new password (min 6 chars) are required." });
+    return;
+  }
+
+  let payload: { email: string; purpose: string };
+  try {
+    payload = jwt.verify(resetToken, process.env.JWT_SECRET as string) as { email: string; purpose: string };
+  } catch {
+    res.status(401).json({ message: "Reset token is invalid or expired. Please start over." });
+    return;
+  }
+
+  if (payload.purpose !== "password-reset") {
+    res.status(401).json({ message: "Invalid reset token." });
+    return;
+  }
+
+  const user = await User.findOne({ email: payload.email });
+  if (!user) {
+    res.status(404).json({ message: "Account not found." });
+    return;
+  }
+
   user.password = newPassword.trim();
   await user.save();
   res.status(200).json({ message: "Password reset successfully." });
