@@ -128,37 +128,53 @@ function OtpBoxes({ value, onChange, disabled, hasError }: {
 }
 
 /* --- Login Page ----------------------------------------- */
-type Mode = "login" | "otp" | "find" | "reset";
+type Mode = "login" | "otp" | "find" | "reset-otp" | "reset";
 
 export default function LoginPage() {
   const { loginWithToken } = useAuth();
   const router = useRouter();
 
-  const [mode,            setMode]            = useState<Mode>("login");
-  const [showPassword,    setShowPassword]    = useState(false);
-  const [showNew,         setShowNew]         = useState(false);
-  const [showConfirm,     setShowConfirm]     = useState(false);
-  const [isLoading,       setIsLoading]       = useState(false);
-  const [foundIdentifier, setFoundIdentifier] = useState("");
-  const [foundName,       setFoundName]       = useState("");
+  const [mode,         setMode]         = useState<Mode>("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNew,      setShowNew]      = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
+  const [isLoading,    setIsLoading]    = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
-  /* OTP state */
-  const [otpEmail,   setOtpEmail]   = useState("");
-  const [otpMasked,  setOtpMasked]  = useState("");
-  const [otpDigits,  setOtpDigits]  = useState<string[]>(Array(OTP_LEN).fill(""));
-  const [otpError,   setOtpError]   = useState("");
-  const [countdown,  setCountdown]  = useState(0);
-  const credRef = useRef<{ identifier: string; password: string } | null>(null);
+  /* Login OTP state */
+  const [loginOtpEmail,       setLoginOtpEmail]       = useState("");
+  const [loginOtpMaskedEmail, setLoginOtpMaskedEmail] = useState("");
+  const [loginOtpDigits, setLoginOtpDigits] = useState<string[]>(Array(OTP_LEN).fill(""));
+  const [loginOtpError,  setLoginOtpError]  = useState("");
+  const [loginCountdown, setLoginCountdown] = useState(0);
+  const loginCredRef = useRef<{ identifier: string; password: string } | null>(null);
+
+  /* Reset-password OTP state */
+  const [resetFoundName,   setResetFoundName]   = useState("");
+  const [resetEmail,       setResetEmail]        = useState("");
+  const [resetMaskedEmail, setResetMaskedEmail] = useState("");
+  const [resetOtpDigits,   setResetOtpDigits]   = useState<string[]>(Array(OTP_LEN).fill(""));
+  const [resetOtpError,    setResetOtpError]    = useState("");
+  const [resetCountdown,   setResetCountdown]   = useState(0);
+  const [resetToken,       setResetToken]       = useState("");
+  const resetIdentifierRef = useRef("");
 
   useEffect(() => { document.title = "ProStack - Login"; }, []);
 
+  /* Countdown timers */
   useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    if (loginCountdown <= 0) return;
+    const t = setTimeout(() => setLoginCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [countdown]);
+  }, [loginCountdown]);
 
+  useEffect(() => {
+    if (resetCountdown <= 0) return;
+    const t = setTimeout(() => setResetCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resetCountdown]);
+
+  /* Forms */
   const { register: regLogin, handleSubmit: handleLogin, setError: setLoginError, formState: { errors: loginErrors } } =
     useForm<LoginValues>({ resolver: yupResolver(loginSchema) });
 
@@ -168,89 +184,68 @@ export default function LoginPage() {
   const { register: regReset, handleSubmit: handleReset, formState: { errors: resetErrors }, reset: resetResetForm } =
     useForm<ResetValues>({ resolver: yupResolver(resetSchema) });
 
-  /* Request OTP (initial login or resend) */
-  const requestOtp = useCallback(async (identifier: string, password: string): Promise<boolean> => {
+  /* ── Login handlers ── */
+  const requestLoginOtp = useCallback(async (identifier: string, password: string): Promise<boolean> => {
     const res  = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ identifier, password }),
     });
     const json = await res.json() as { mfaRequired?: boolean; email?: string; maskedEmail?: string; message?: string };
-
+    console.log("[login response]", json);
     if (res.ok && json.mfaRequired) {
-      setOtpEmail(json.email ?? "");
-      setOtpMasked(json.maskedEmail ?? "your email");
+      setLoginOtpEmail(json.email ?? "");
+      setLoginOtpMaskedEmail(json.maskedEmail ?? "");
       return true;
     }
-    if (res.status === 401) {
-      setToast({ message: "Invalid credentials. Please try again.", type: "error" });
-    } else {
-      setToast({ message: json.message ?? "Unable to reach server. Please try again later.", type: "error" });
-    }
+    if (res.status === 401) setToast({ message: "Invalid credentials. Please try again.", type: "error" });
+    else setToast({ message: json.message ?? "Unable to reach server. Please try again later.", type: "error" });
     return false;
   }, []);
 
   const onLogin = async (data: LoginValues) => {
     setIsLoading(true);
     try {
-      credRef.current = { identifier: data.identifier, password: data.password };
-      const ok = await requestOtp(data.identifier, data.password);
+      loginCredRef.current = { identifier: data.identifier, password: data.password };
+      const ok = await requestLoginOtp(data.identifier, data.password);
       if (ok) {
-        setOtpDigits(Array(OTP_LEN).fill(""));
-        setOtpError("");
-        setCountdown(30);
-        setMode("otp");
+        setLoginOtpDigits(Array(OTP_LEN).fill("")); setLoginOtpError(""); setLoginCountdown(30); setMode("otp");
       } else {
-        setLoginError("identifier", { message: " " });
-        setLoginError("password",   { message: " " });
+        setLoginError("identifier", { message: " " }); setLoginError("password", { message: " " });
       }
-    } catch {
-      setToast({ message: "Unable to reach server. Please try again later.", type: "error" });
-    }
+    } catch { setToast({ message: "Unable to reach server. Please try again later.", type: "error" }); }
     setIsLoading(false);
   };
 
-  const onOtpSubmit = async (e: React.FormEvent) => {
+  const onLoginOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const otp = otpDigits.join("");
-    if (otp.length < OTP_LEN) { setOtpError("Please enter the complete 6-digit OTP."); return; }
-    setIsLoading(true); setOtpError("");
+    const otp = loginOtpDigits.join("");
+    if (otp.length < OTP_LEN) { setLoginOtpError("Please enter the complete 6-digit OTP."); return; }
+    setIsLoading(true); setLoginOtpError("");
     try {
       const res  = await fetch(`${API_BASE}/api/auth/login/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: otpEmail, otp }),
+        body: JSON.stringify({ email: loginOtpEmail, otp }),
       });
       const json = await res.json() as { token?: string; message?: string };
-      if (res.ok && json.token) {
-        await loginWithToken(json.token);
-        router.replace("/");
-      } else {
-        setOtpError(json.message ?? "Invalid OTP. Please try again.");
-      }
-    } catch {
-      setOtpError("Unable to reach server. Please try again later.");
-    }
+      if (res.ok && json.token) { await loginWithToken(json.token); router.replace("/"); }
+      else setLoginOtpError(json.message ?? "Invalid OTP. Please try again.");
+    } catch { setLoginOtpError("Unable to reach server. Please try again later."); }
     setIsLoading(false);
   };
 
-  const onOtpResend = async () => {
-    if (countdown > 0 || !credRef.current) return;
+  const onLoginOtpResend = async () => {
+    if (loginCountdown > 0 || !loginCredRef.current) return;
     setIsLoading(true);
     try {
-      const ok = await requestOtp(credRef.current.identifier, credRef.current.password);
-      if (ok) {
-        setOtpDigits(Array(OTP_LEN).fill(""));
-        setOtpError("");
-        setCountdown(30);
-        setToast({ message: "OTP resent to your email.", type: "success" });
-      }
-    } catch {
-      setToast({ message: "Unable to resend OTP.", type: "error" });
-    }
+      const ok = await requestLoginOtp(loginCredRef.current.identifier, loginCredRef.current.password);
+      if (ok) { setLoginOtpDigits(Array(OTP_LEN).fill("")); setLoginOtpError(""); setLoginCountdown(30); setToast({ message: "OTP resent to your email.", type: "success" }); }
+    } catch { setToast({ message: "Unable to resend OTP.", type: "error" }); }
     setIsLoading(false);
   };
 
+  /* ── Reset-password handlers ── */
   const onFind = async (data: FindValues) => {
     setIsLoading(true);
     try {
@@ -259,10 +254,63 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: data.identifier }),
       });
-      const json = await res.json() as { found?: boolean; name?: string; message?: string };
-      if (res.ok && json.found) { setFoundIdentifier(data.identifier); setFoundName(json.name ?? "User"); setMode("reset"); }
-      else setToast({ message: json.message ?? "Account not found.", type: "error" });
+      const json = await res.json() as { found?: boolean; name?: string; email?: string; maskedEmail?: string; message?: string };
+      console.log("[find-user response]", json);
+      if (res.ok && json.found) {
+        resetIdentifierRef.current = data.identifier;
+        setResetFoundName(json.name ?? "");
+        setResetEmail(json.email ?? "");
+        setResetMaskedEmail(json.maskedEmail ?? "");
+        setResetOtpDigits(Array(OTP_LEN).fill(""));
+        setResetOtpError("");
+        setResetCountdown(30);
+        setMode("reset-otp");
+      } else {
+        setToast({ message: json.message ?? "Account not found.", type: "error" });
+      }
     } catch { setToast({ message: "Unable to reach server. Please try again later.", type: "error" }); }
+    setIsLoading(false);
+  };
+
+  const onResetOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const otp = resetOtpDigits.join("");
+    if (otp.length < OTP_LEN) { setResetOtpError("Please enter the complete 6-digit OTP."); return; }
+    setIsLoading(true); setResetOtpError("");
+    try {
+      const res  = await fetch(`${API_BASE}/api/auth/reset-password/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail, otp }),
+      });
+      const json = await res.json() as { verified?: boolean; resetToken?: string; message?: string };
+      if (res.ok && json.verified && json.resetToken) {
+        setResetToken(json.resetToken);
+        setMode("reset");
+      } else {
+        setResetOtpError(json.message ?? "Invalid OTP. Please try again.");
+      }
+    } catch { setResetOtpError("Unable to reach server. Please try again later."); }
+    setIsLoading(false);
+  };
+
+  const onResetOtpResend = async () => {
+    if (resetCountdown > 0) return;
+    setIsLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/api/auth/find-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: resetIdentifierRef.current }),
+      });
+      const json = await res.json() as { found?: boolean; message?: string };
+      if (res.ok && json.found) {
+        setResetOtpDigits(Array(OTP_LEN).fill("")); setResetOtpError(""); setResetCountdown(30);
+        setToast({ message: "OTP resent to your email.", type: "success" });
+      } else {
+        setToast({ message: json.message ?? "Could not resend OTP.", type: "error" });
+      }
+    } catch { setToast({ message: "Unable to resend OTP.", type: "error" }); }
     setIsLoading(false);
   };
 
@@ -272,21 +320,34 @@ export default function LoginPage() {
       const res  = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: foundIdentifier, newPassword: data.newPassword }),
+        body: JSON.stringify({ resetToken, newPassword: data.newPassword }),
       });
       const json = await res.json() as { message?: string };
-      if (res.ok) { setToast({ message: "Password reset successfully! You can now sign in.", type: "success" }); resetResetForm(); resetFind(); setMode("login"); }
-      else setToast({ message: json.message ?? "Reset failed. Please try again.", type: "error" });
+      if (res.ok) {
+        setToast({ message: "Password reset successfully! You can now sign in.", type: "success" });
+        resetResetForm(); resetFind(); setMode("login");
+      } else {
+        setToast({ message: json.message ?? "Reset failed. Please try again.", type: "error" });
+      }
     } catch { setToast({ message: "Unable to reach server. Please try again later.", type: "error" }); }
     setIsLoading(false);
   };
 
-  const goBack = () => { setMode("login"); setFoundIdentifier(""); setFoundName(""); resetFind(); resetResetForm(); };
+  const goBack = () => { setMode("login"); resetFind(); resetResetForm(); };
 
   const inputCls = (hasError: boolean) =>
     `w-full rounded-xl border bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition focus:ring-2 ${
       hasError ? "border-red-500 focus:ring-red-500/40" : "border-white/10 focus:border-indigo-500 focus:ring-indigo-500/30"
     }`;
+
+  /* ── Title/subtitle per mode ── */
+  const headings: Record<Mode, { title: string; sub: string }> = {
+    "login":     { title: "Welcome back",    sub: "Sign in to your ProStack account" },
+    "otp":       { title: "Check your email", sub: `OTP sent to ${loginOtpEmail || loginOtpMaskedEmail || "your registered email"}` },
+    "find":      { title: "Reset Password",  sub: "Enter your username, email or mobile to continue" },
+    "reset-otp": { title: "Check your email", sub: `OTP sent to ${resetEmail || resetMaskedEmail || "your registered email"}` },
+    "reset":     { title: "New Password",    sub: "OTP verified. Set a new password for your account." },
+  };
 
   return (
     <>
@@ -300,19 +361,18 @@ export default function LoginPage() {
 
         <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-2xl p-8 transition-all duration-300">
 
+          {/* Header */}
           <div className="mb-8 flex flex-col items-center gap-3">
             <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 overflow-hidden">
               <Image src="/proStacklogo.png" alt="ProStack Logo" width={48} height={48} className="object-contain" />
             </div>
             <div className="text-center">
-              {mode === "login" && (<><h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1><p className="mt-1 text-sm text-gray-400">Sign in to your ProStack account</p></>)}
-              {mode === "otp"   && (<><h1 className="text-2xl font-bold tracking-tight text-white">Check your email</h1><p className="mt-1 text-sm text-gray-400">We sent a 6-digit OTP to <span className="text-white font-medium">{otpMasked}</span></p></>)}
-              {mode === "find"  && (<><h1 className="text-2xl font-bold tracking-tight text-white">Reset Password</h1><p className="mt-1 text-sm text-gray-400">Enter your username, email or mobile to continue</p></>)}
-              {mode === "reset" && (<><h1 className="text-2xl font-bold tracking-tight text-white">New Password</h1><p className="mt-1 text-sm text-gray-400">Set a new password for your account</p></>)}
+              <h1 className="text-2xl font-bold tracking-tight text-white">{headings[mode].title}</h1>
+              <p className="mt-1 text-sm text-gray-400">{headings[mode].sub}</p>
             </div>
           </div>
 
-          {/* LOGIN */}
+          {/* ── LOGIN ── */}
           {mode === "login" && (
             <form onSubmit={handleLogin(onLogin)} className="space-y-5" noValidate>
               <div className="space-y-1.5">
@@ -323,7 +383,7 @@ export default function LoginPage() {
                     placeholder="Enter username, email or mobile"
                     className={inputCls(!!loginErrors.identifier)} />
                 </div>
-                {loginErrors.identifier && loginErrors.identifier.message?.trim() && (
+                {loginErrors.identifier?.message?.trim() && (
                   <p className="text-xs text-red-400 mt-0.5">{loginErrors.identifier.message}</p>
                 )}
               </div>
@@ -339,7 +399,7 @@ export default function LoginPage() {
                     {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </button>
                 </div>
-                {loginErrors.password && loginErrors.password.message?.trim() && (
+                {loginErrors.password?.message?.trim() && (
                   <p className="text-xs text-red-400 mt-0.5">{loginErrors.password.message}</p>
                 )}
                 <div className="flex justify-end">
@@ -351,48 +411,49 @@ export default function LoginPage() {
                 className="w-full rounded-xl bg-[#023430] py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#012825] active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2">
                 {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Sending OTP...</span> : "Sign In"}
               </button>
+
+              <div className="mt-5 flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+                <Link href="/signup" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition hover:opacity-80" style={{ color: "#f7b205" }}>
+                  <UserPlusIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "#f7b205" }} />
+                  <span>New to ProStack? Register your admin account here</span>
+                </Link>
+              </div>
             </form>
           )}
 
-          {/* OTP */}
+          {/* ── LOGIN OTP ── */}
           {mode === "otp" && (
-            <form onSubmit={onOtpSubmit} className="space-y-6" noValidate>
-
-              {/* Email icon banner */}
+            <form onSubmit={onLoginOtpSubmit} className="space-y-6" noValidate>
               <div className="flex items-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3">
                 <EnvelopeIcon className="h-5 w-5 shrink-0 text-indigo-400" />
-                <div>
-                  <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wide">OTP sent</p>
-                  <p className="text-sm text-white">{otpMasked}</p>
+                <div className="min-w-0">
+                  <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wide">OTP sent to</p>
+                  <p className="text-sm font-bold text-white break-all">{loginOtpEmail || loginOtpMaskedEmail || "your registered email"}</p>
                 </div>
               </div>
-
               <div className="space-y-3">
                 <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider text-center">Enter 6-digit OTP</label>
-                <OtpBoxes value={otpDigits} onChange={setOtpDigits} disabled={isLoading} hasError={!!otpError} />
-                {otpError && <p className="text-xs text-red-400 text-center">{otpError}</p>}
+                <OtpBoxes value={loginOtpDigits} onChange={setLoginOtpDigits} disabled={isLoading} hasError={!!loginOtpError} />
+                {loginOtpError && <p className="text-xs text-red-400 text-center">{loginOtpError}</p>}
               </div>
-
               <button type="submit" disabled={isLoading}
                 className="w-full rounded-xl bg-[#023430] py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#012825] active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed">
                 {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Verifying...</span> : "Verify OTP"}
               </button>
-
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <button type="button"
-                  onClick={() => { setMode("login"); setOtpDigits(Array(OTP_LEN).fill("")); setOtpError(""); }}
+                <button type="button" onClick={() => { setMode("login"); setLoginOtpDigits(Array(OTP_LEN).fill("")); setLoginOtpError(""); }}
                   className="flex items-center gap-1 hover:text-white transition cursor-pointer">
                   <ArrowLeftIcon className="h-3.5 w-3.5" />Back
                 </button>
-                <button type="button" onClick={onOtpResend} disabled={countdown > 0 || isLoading}
+                <button type="button" onClick={onLoginOtpResend} disabled={loginCountdown > 0 || isLoading}
                   className="text-indigo-400 hover:text-indigo-300 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                  {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
+                  {loginCountdown > 0 ? `Resend in ${loginCountdown}s` : "Resend OTP"}
                 </button>
               </div>
             </form>
           )}
 
-          {/* FIND */}
+          {/* ── FIND ── */}
           {mode === "find" && (
             <form onSubmit={handleFind(onFind)} className="space-y-5" noValidate>
               <div className="space-y-1.5">
@@ -416,16 +477,52 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* RESET */}
-          {mode === "reset" && (
-            <form onSubmit={handleReset(onReset)} className="space-y-5" noValidate>
-              <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-                <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-400" />
-                <div>
-                  <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wide">Account found</p>
-                  <p className="text-sm text-white font-medium">{foundName}</p>
+          {/* ── RESET OTP ── */}
+          {mode === "reset-otp" && (
+            <form onSubmit={onResetOtpSubmit} className="space-y-6" noValidate>
+              <div className="flex items-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3">
+                <EnvelopeIcon className="h-5 w-5 shrink-0 text-indigo-400" />
+                <div className="min-w-0">
+                  <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wide">OTP sent to</p>
+                  <p className="text-sm font-bold text-white break-all">{resetEmail || resetMaskedEmail || "your registered email"}</p>
                 </div>
               </div>
+
+              {resetFoundName && (
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+                  <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-400" />
+                  <div>
+                    <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wide">Account found</p>
+                    <p className="text-sm text-white font-medium">{resetFoundName}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider text-center">Enter 6-digit OTP</label>
+                <OtpBoxes value={resetOtpDigits} onChange={setResetOtpDigits} disabled={isLoading} hasError={!!resetOtpError} />
+                {resetOtpError && <p className="text-xs text-red-400 text-center">{resetOtpError}</p>}
+              </div>
+              <button type="submit" disabled={isLoading}
+                className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Verifying...</span> : "Verify OTP"}
+              </button>
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <button type="button" onClick={() => { setMode("find"); setResetOtpDigits(Array(OTP_LEN).fill("")); setResetOtpError(""); }}
+                  className="flex items-center gap-1 hover:text-white transition cursor-pointer">
+                  <ArrowLeftIcon className="h-3.5 w-3.5" />Back
+                </button>
+                <button type="button" onClick={onResetOtpResend} disabled={resetCountdown > 0 || isLoading}
+                  className="text-indigo-400 hover:text-indigo-300 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  {resetCountdown > 0 ? `Resend in ${resetCountdown}s` : "Resend OTP"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── RESET PASSWORD ── */}
+          {mode === "reset" && (
+            <form onSubmit={handleReset(onReset)} className="space-y-5" noValidate>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider">New Password</label>
                 <div className="relative">
@@ -456,20 +553,7 @@ export default function LoginPage() {
                 className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 active:scale-[0.98] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed">
                 {isLoading ? <span className="flex items-center justify-center gap-2"><Spinner />Resetting...</span> : "Reset Password"}
               </button>
-              <button type="button" onClick={() => setMode("find")}
-                className="flex w-full items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-white transition cursor-pointer pt-1">
-                <ArrowLeftIcon className="h-3.5 w-3.5" />Try a different account
-              </button>
             </form>
-          )}
-
-          {mode === "login" && (
-            <div className="mt-5 flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-              <Link href="/signup" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition hover:opacity-80" style={{ color: "#f7b205" }}>
-                <UserPlusIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "#f7b205" }} />
-                <span>New to ProStack? Register your admin account here</span>
-              </Link>
-            </div>
           )}
         </div>
 
