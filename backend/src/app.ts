@@ -46,8 +46,21 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// OTP endpoints: stricter limit (5 per 10 min) to prevent abuse
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  skip: () => process.env.NODE_ENV !== "production",
+  message: { message: "Too many OTP requests. Please wait before trying again." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Routes
 app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/signup/send-otp",       otpLimiter);
+app.use("/api/auth/mfa/login",             loginLimiter);
+app.use("/api/auth/mfa/login/verify-otp",  otpLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/enquiries", enquiryRoutes);

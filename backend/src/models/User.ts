@@ -9,6 +9,7 @@ export interface IUser extends Document {
   username: string;
   password: string;
   role: string;
+  isVerified: boolean;
   lastLoginAt?: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -54,6 +55,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       default: "admin",
       enum: ["admin", "staff"],
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     lastLoginAt: {
       type: Date,
