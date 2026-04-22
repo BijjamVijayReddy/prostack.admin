@@ -1,6 +1,5 @@
 import axios from "axios";
 
-const TEMPLATE_ID  = "69e86bdf1321e5c56301e0f2";
 const OTP_API_BASE = "https://control.msg91.com/api/v5/otp";
 
 function toFullMobile(mobile: string): string {
@@ -29,20 +28,28 @@ export async function sendSmsOtp(mobile: string): Promise<void> {
     return;
   }
 
-  await axios.post(
-    OTP_API_BASE,
-    {
-      mobile:      toFullMobile(mobile),
-      template_id: TEMPLATE_ID,
-    },
-    {
-      headers: {
-        authkey:        authKey,
-        "Content-Type": "application/json",
+  try {
+    const res = await axios.post(
+      OTP_API_BASE,
+      {
+        mobile:     toFullMobile(mobile),
+        otp_length: 6,
       },
-      timeout: 10_000,
+      {
+        headers: {
+          authkey:        authKey,
+          "Content-Type": "application/json",
+        },
+        timeout: 10_000,
+      }
+    );
+    console.info("[MSG91] Send OTP response:", res.data);
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error("[MSG91] Send OTP error:", err.response?.data ?? err.message);
     }
-  );
+    throw err;
+  }
 }
 
 /**
@@ -62,15 +69,22 @@ export async function verifySmsOtp(mobile: string, otp: string): Promise<boolean
     return false;
   }
 
-  const res = await axios.get(`${OTP_API_BASE}/verify`, {
-    params: {
-      mobile: toFullMobile(mobile),
-      otp,
-    },
-    headers: { authkey: authKey },
-    timeout: 10_000,
-  });
-
-  // MSG91 returns { type: "success", ... } on successful verification
-  return (res.data as { type?: string })?.type === "success";
-}
+  try {
+    const res = await axios.get(`${OTP_API_BASE}/verify`, {
+      params: {
+        mobile: toFullMobile(mobile),
+        otp,
+      },
+      headers: { authkey: authKey },
+      timeout: 10_000,
+    });
+    console.info("[MSG91] Verify OTP response:", res.data);
+    // MSG91 returns { type: "success", ... } on successful verification
+    return (res.data as { type?: string })?.type === "success";
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error("[MSG91] Verify OTP error:", err.response?.data ?? err.message);
+    }
+    throw err;
+  }
+}
