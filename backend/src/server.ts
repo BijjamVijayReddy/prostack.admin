@@ -1,6 +1,7 @@
 import "dotenv/config";
 import app from "./app";
 import connectDB from "./config/db";
+import OtpRecord from "./models/OtpRecord";
 
 // ── Catch any crash that escapes async try/catch ──────────────────
 process.on("uncaughtException", (err) => {
@@ -31,6 +32,16 @@ const PORT = Number(process.env.PORT) || 5000;
 
 const start = async () => {
   await connectDB();
+
+  // Drop any stale indexes (e.g. old unique mobile_1_purpose_1 without partialFilterExpression)
+  // and recreate from the current model definition.
+  try {
+    await OtpRecord.syncIndexes();
+    console.log("[INFO] OtpRecord indexes synced");
+  } catch (err) {
+    console.warn("[WARN] OtpRecord.syncIndexes() failed (non-fatal):", err);
+  }
+
   app.listen(PORT, () => {
     console.log(`[INFO] Server running on port ${PORT}`);
   });

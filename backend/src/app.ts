@@ -10,6 +10,10 @@ import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
 
+// Trust Render's (and other reverse proxies') X-Forwarded-For header
+// so express-rate-limit can identify clients correctly.
+app.set("trust proxy", 1);
+
 // CORS must come BEFORE body parser so error responses (413 etc.) also include CORS headers
 // Always allow localhost for local dev (even when hitting the production Render backend).
 // In production also allow: the explicit FRONTEND_ORIGIN env var + all *.vercel.app previews.

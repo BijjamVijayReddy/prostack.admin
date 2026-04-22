@@ -42,8 +42,15 @@ const OtpRecordSchema = new Schema<IOtpRecord>(
 
 // TTL index: MongoDB auto-removes expired records
 OtpRecordSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-// Sparse indexes for lookup
-OtpRecordSchema.index({ mobile: 1, purpose: 1 }, { sparse: true });
-OtpRecordSchema.index({ email: 1,  purpose: 1 }, { sparse: true });
+// Partial indexes: only index documents where the field actually exists.
+// This avoids the duplicate-null bug when multiple email-only or mobile-only records share the same purpose.
+OtpRecordSchema.index(
+  { mobile: 1, purpose: 1 },
+  { partialFilterExpression: { mobile: { $type: "string" } } }
+);
+OtpRecordSchema.index(
+  { email: 1, purpose: 1 },
+  { partialFilterExpression: { email: { $type: "string" } } }
+);
 
 export default mongoose.model<IOtpRecord>("OtpRecord", OtpRecordSchema);
