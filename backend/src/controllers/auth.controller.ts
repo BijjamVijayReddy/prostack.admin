@@ -236,8 +236,10 @@ export const findUser = async (req: Request, res: Response): Promise<void> => {
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
+  const recipientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || user.email.split("@")[0];
+
   try {
-    await sendEmailOtp(user.email, otp);
+    await sendEmailOtp(user.email, otp, recipientName);
   } catch (err) {
     console.error("[Resend] Failed to send reset OTP:", err);
     res.status(502).json({ message: "Failed to send OTP email. Please try again." });

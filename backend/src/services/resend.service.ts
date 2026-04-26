@@ -27,7 +27,9 @@ export function maskEmail(email: string): string {
 }
 
 /** Send login OTP email via Resend */
-export async function sendEmailOtp(email: string, otp: string): Promise<void> {
+export async function sendEmailOtp(email: string, otp: string, name?: string): Promise<void> {
+  const recipientName = name?.trim() || email.split("@")[0] || "there";
+
   const { error } = await resend.emails.send({
     from: "ProStack <noreply@prostack-admin.com>",
     to:   email,
@@ -42,15 +44,11 @@ export async function sendEmailOtp(email: string, otp: string): Promise<void> {
             </td>
           </tr>
 
-          <tr>
-            <td style="padding:24px 24px 0;text-align:center;">
-              <img src="https://images.unsplash.com/photo-1555529669-445e4eebf5c9?auto=format&fit=crop&w=700&q=80" alt="Secure login" width="512" style="width:100%;max-width:512px;border-radius:18px;display:block;margin:0 auto;" />
-            </td>
-          </tr>
+          
 
           <tr>
             <td style="padding:24px 28px 12px;color:#1f2937;">
-              <p style="margin:0;font-size:15px;line-height:1.7;color:#4b5563;">Hi there,</p>
+              <p style="margin:0;font-size:15px;line-height:1.7;color:#4b5563;">Hi ${recipientName},</p>
               <p style="margin:16px 0 0;font-size:16px;line-height:1.7;color:#111827;">Use the one-time password below to sign in to your ProStack account. This code is valid for <strong>10 minutes</strong> and can only be used once.</p>
             </td>
           </tr>

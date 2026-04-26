@@ -177,8 +177,10 @@ export const smsLogin = async (req: Request, res: Response): Promise<void> => {
     expiresAt: new Date(Date.now() + PENDING_TTL_MS),
   });
 
+  const recipientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || user.email.split("@")[0];
+
   try {
-    await sendEmailOtp(user.email, otp);
+    await sendEmailOtp(user.email, otp, recipientName);
   } catch (err) {
     console.error("[Resend] Failed to send login OTP email:", err);
     res.status(502).json({ message: "Failed to send OTP email. Please try again." });
