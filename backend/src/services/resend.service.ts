@@ -31,15 +31,67 @@ export async function sendEmailOtp(email: string, otp: string): Promise<void> {
   const { error } = await resend.emails.send({
     from: "ProStack <noreply@prostack-admin.com>",
     to:   email,
-    subject: "Your ProStack Login OTP",
+    subject: "Your ProStack Login OTP Code",
     html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#060C1A;color:#fff;border-radius:16px;">
-        <h2 style="margin:0 0 8px;color:#fff;">ProStack Login OTP</h2>
-        <p style="color:#9ca3af;margin:0 0 24px;">Use the code below to complete your sign-in. It expires in <strong>10 minutes</strong>.</p>
-        <div style="background:#1e293b;border-radius:12px;padding:24px;text-align:center;letter-spacing:12px;font-size:36px;font-weight:700;color:#fff;">
-          ${otp}
-        </div>
-        <p style="color:#6b7280;font-size:12px;margin:24px 0 0;">If you did not request this, please ignore this email.</p>
+      <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;margin:0;">
+        <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
+          <tr>
+            <td style="background:#0d1b3d;padding:28px 24px 20px;color:#ffffff;text-align:center;">
+              <p style="margin:0;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#8fb5ff;">ProStack Secure Login</p>
+              <h1 style="margin:12px 0 0;font-size:28px;font-weight:700;line-height:1.1;">Your OTP is ready</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 24px 0;text-align:center;">
+              <img src="https://images.unsplash.com/photo-1555529669-445e4eebf5c9?auto=format&fit=crop&w=700&q=80" alt="Secure login" width="512" style="width:100%;max-width:512px;border-radius:18px;display:block;margin:0 auto;" />
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 28px 12px;color:#1f2937;">
+              <p style="margin:0;font-size:15px;line-height:1.7;color:#4b5563;">Hi there,</p>
+              <p style="margin:16px 0 0;font-size:16px;line-height:1.7;color:#111827;">Use the one-time password below to sign in to your ProStack account. This code is valid for <strong>10 minutes</strong> and can only be used once.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 28px 24px;">
+              <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:16px;padding:22px 18px;text-align:center;letter-spacing:10px;font-size:38px;font-weight:700;color:#1d4ed8;">${otp}</div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 28px 24px;color:#4b5563;">
+              <p style="margin:0 0 16px;font-size:14px;line-height:1.8;">
+                You can copy this code into the login screen to complete authentication.
+              </p>
+              <p style="margin:0;font-size:14px;line-height:1.8;">If you didn’t request this code, please ignore the email or contact support immediately.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 28px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:14px;padding:16px;border:1px solid #e5e7eb;">
+                <tr>
+                  <td style="font-size:13px;color:#6b7280;line-height:1.6;">Email</td>
+                  <td style="text-align:right;font-size:13px;color:#111827;font-weight:700;">${maskEmail(email)}</td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px;color:#6b7280;line-height:1.6;">Expires in</td>
+                  <td style="text-align:right;font-size:13px;color:#111827;font-weight:700;">10 minutes</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#f8fafc;padding:20px 28px 28px;color:#6b7280;font-size:13px;line-height:1.7;border-top:1px solid #e5e7eb;">
+              <p style="margin:0 0 10px;">Need help? Reply to this email or contact the ProStack support team.</p>
+              <p style="margin:0;">This code is for login verification only. Please do not share it with anyone.</p>
+            </td>
+          </tr>
+        </table>
       </div>
     `,
   });
