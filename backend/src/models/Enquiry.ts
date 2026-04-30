@@ -7,7 +7,7 @@ export interface IEnquiry extends Document {
   expectedJoinDate?: string;
   name: string;
   mobile: string;
-  email: string;
+  email?: string;
   gender: string;
   city: string;
   course: string;
@@ -24,7 +24,7 @@ const EnquirySchema = new Schema<IEnquiry>(
     expectedJoinDate: { type: String, default: "" },
     name: { type: String, required: true, trim: true },
     mobile: { type: String, required: true, trim: true },
-    email: { type: String, required: true, trim: true },
+    email: { type: String, required: false, trim: true ,default: ""},
     gender: { type: String, required: true },
     city: { type: String, required: true, trim: true },
     course: { type: String, required: true, trim: true },
