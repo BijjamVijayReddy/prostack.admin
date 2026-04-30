@@ -67,21 +67,21 @@ export function EnquiriesTable({ data, onEdit }: EnquiriesTableProps) {
         );
       },
     },
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: (info) => {
-        const email = info.getValue<string>();
-        return (
-          <a
-            href={`mailto:${email}`}
-            className="text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
-          >
-            {email}
-          </a>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "email",
+    //   header: "Email",
+    //   cell: (info) => {
+    //     const email = info.getValue<string>();
+    //     return (
+    //       <a
+    //         href={`mailto:${email}`}
+    //         className="text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+    //       >
+    //         {email}
+    //       </a>
+    //     );
+    //   },
+    // },
     { accessorKey: "gender", header: "Gender" },
     { accessorKey: "city", header: "City" },
     { accessorKey: "course", header: "Course" },

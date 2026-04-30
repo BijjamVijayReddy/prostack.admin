@@ -6,7 +6,7 @@ export interface Enquiry {
   expectedJoinDate?: string;
   name: string;
   mobile: string;
-  email: string;
+  email?: string;
   gender: string;
   city: string;
   course: string;
