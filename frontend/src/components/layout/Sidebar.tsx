@@ -142,7 +142,7 @@ export function Sidebar() {
               <>
                 <p className="text-xs font-semibold text-white/80 whitespace-nowrap">Email Usage</p>
                 <p className="mt-0.5 text-lg font-bold text-white whitespace-nowrap leading-tight">
-                  {quota.total.toLocaleString("en-IN")}
+                  {quota.total < 10 ? `0${quota.total}` : quota.total.toLocaleString("en-IN")}
                   <span className="text-sm font-medium text-white/40"> / {LIMIT.toLocaleString("en-IN")}</span>
                 </p>
                 <div className="flex items-center justify-between mt-0.5 mb-2">
@@ -151,7 +151,7 @@ export function Sidebar() {
                     className="text-[11px] font-semibold"
                     style={{ color: quota.total / LIMIT > 0.8 ? "#f87171" : "#4ade80" }}
                   >
-                    {quota.total} Used
+                    {quota.total < 10 ? `0${quota.total}` : quota.total} Used
                   </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
