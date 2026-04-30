@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Student } from "../models/Student";
 import { Enquiry } from "../models/Enquiry";
 import { Placement } from "../models/Placement";
+import { EmailLog } from "../models/EmailLog";
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
 // Use local date string to avoid UTC-offset issues (e.g. IST UTC+5:30)
@@ -282,5 +283,22 @@ export async function getBatchCategories(req: Request, res: Response) {
     res.json({ freshers, recent, senior, currentYear });
   } catch (err: any) {
     res.status(500).json({ message: err.message ?? "Failed to fetch batch categories" });
+  }
+}
+
+// GET /api/dashboard/email-quota
+export async function getEmailQuota(req: Request, res: Response) {
+  try {
+    const now        = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const logs = await EmailLog.find({ sentAt: { $gte: monthStart, $lte: monthEnd } }, { type: 1 }).lean();
+    const otpCount     = logs.filter((l: any) => l.type === "otp").length;
+    const receiptCount = logs.filter((l: any) => l.type === "receipt").length;
+    const total        = otpCount + receiptCount;
+    const limit        = 3000;
+    res.json({ total, otpCount, receiptCount, limit, remaining: Math.max(0, limit - total), month: now.toLocaleString("en-IN", { month: "long", year: "numeric" }) });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message ?? "Failed to fetch email quota" });
   }
 }

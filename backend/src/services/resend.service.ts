@@ -1,8 +1,23 @@
+
 import { Resend } from "resend";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import { EmailLog } from "../models/EmailLog";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazily initialised — server starts fine without RESEND_API_KEY in local dev
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
+
+async function logEmail(type: "otp" | "receipt", recipient: string) {
+  try { await EmailLog.create({ type, recipient, sentAt: new Date() }); }
+  catch (e) { console.error("[EmailLog] Failed to log:", e); }
+}
 
 /** Generate a random 6-digit OTP string */
 export function generateOtp(): string {
@@ -30,7 +45,7 @@ export function maskEmail(email: string): string {
 export async function sendEmailOtp(email: string, otp: string, name?: string): Promise<void> {
   const recipientName = name?.trim() || email.split("@")[0] || "there";
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: "ProStack <noreply@prostack-admin.com>",
     to:   email,
     subject: "Your ProStack Login OTP Code",
@@ -100,6 +115,7 @@ export async function sendEmailOtp(email: string, otp: string, name?: string): P
   }
 
   console.log(`[Resend] OTP sent to ${maskEmail(email)}`);
+  await logEmail("otp", email);
 }
 
 export interface ReceiptEmailPayload {
@@ -200,7 +216,7 @@ export async function sendPaymentReceiptEmail(payload: ReceiptEmailPayload): Pro
     ? [{ filename: `Receipt_${receiptNo}.pdf`, content: pdfBase64 }]
     : [];
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from:        "ProStack <noreply@prostack-admin.com>",
     to:          studentEmail,
     subject:     `${course} Payment Invoice From Prostack - Admin`,
@@ -214,4 +230,5 @@ export async function sendPaymentReceiptEmail(payload: ReceiptEmailPayload): Pro
   }
 
   console.log(`[Resend] Receipt email sent to ${maskEmail(studentEmail)}`);
+  await logEmail("receipt", studentEmail);
 }
