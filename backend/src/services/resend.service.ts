@@ -219,6 +219,7 @@ export async function sendPaymentReceiptEmail(payload: ReceiptEmailPayload): Pro
   const { error } = await getResend().emails.send({
     from:        "ProStack <noreply@prostack-admin.com>",
     to:          studentEmail,
+    cc:"bijjamvijayreddy@gmail.com",
     subject:     `${course} Payment Invoice From Prostack - Admin`,
     html,
     attachments,
