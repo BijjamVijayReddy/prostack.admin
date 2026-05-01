@@ -141,14 +141,14 @@ export async function sendReceipt(req: Request, res: Response) {
     const receiptNo = student.receiptNo || `PS-${student.admissionNo.replace(/\D/g, "").slice(-6)}`;
 
     await sendPaymentReceiptEmail({
-      studentName: student.name,
-      studentEmail: `${student.email}, bijjamvijayreddy@gmail.com`,
-      course: student.course,
+      studentName:   student.name,
+      studentEmail:  student.email,
+      course:        student.course,
       receiptNo,
-      totalFee: student.totalFee,
-      totalPaid: student.totalPaid,
+      totalFee:      student.totalFee,
+      totalPaid:     student.totalPaid,
       pendingAmount: student.pendingAmount,
-      dueDate: student.dueDate,
+      dueDate:       student.dueDate,
       pdfBase64,
     });
 
