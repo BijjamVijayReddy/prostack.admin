@@ -4,12 +4,14 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   BriefcaseIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 export interface SidebarItem {
   key: SidebarKey;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
 }
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -32,5 +34,10 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     key: "placements",
     label: "Placements",
     icon: BriefcaseIcon,
+  },
+  {
+    key: "messages",
+    label: "WhatsApp",
+    icon: ChatBubbleLeftRightIcon,
   },
 ];

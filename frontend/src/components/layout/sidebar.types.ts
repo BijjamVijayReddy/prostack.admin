@@ -2,4 +2,5 @@ export type SidebarKey =
   | "dashboard"
   | "students"
   | "enquiry"
-  | "placements";
+  | "placements"
+  | "messages";
