@@ -75,7 +75,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/placements", placementRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api/whatsapp", whatsAppRoutes);
 // Health check
 app.get("/health", (_req, res) => {
   res.status(200).json({
