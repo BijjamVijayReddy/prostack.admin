@@ -1,7 +1,10 @@
 import "dotenv/config";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import app from "./app";
 import connectDB from "./config/db";
 import OtpRecord from "./models/OtpRecord";
+import { whatsappService } from "./services/whatappService";
 
 // ── Catch any crash that escapes async try/catch ──────────────────
 process.on("uncaughtException", (err) => {
@@ -42,7 +45,43 @@ const start = async () => {
     console.warn("[WARN] OtpRecord.syncIndexes() failed (non-fatal):", err);
   }
 
-  app.listen(PORT, () => {
+  // ── HTTP server + Socket.IO ──────────────────────────────────
+  const httpServer = createServer(app);
+
+  const allowedOrigins: (string | RegExp)[] = [
+    "http://localhost:3000",
+    "https://prostack-admin.com",
+    "https://www.prostack-admin.com",
+    /\.vercel\.app$/,
+  ];
+  if (process.env.FRONTEND_ORIGIN) {
+    process.env.FRONTEND_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean).forEach((o) => {
+      allowedOrigins.push(o);
+    });
+  }
+
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: allowedOrigins,
+      credentials: true,
+      methods: ["GET", "POST"],
+    },
+    transports: ["websocket", "polling"],
+  });
+
+  whatsappService.setIO(io);
+
+  io.on("connection", (socket) => {
+    // Send current state to newly connected client
+    socket.emit("wa:status", whatsappService.getPublicState());
+  });
+
+  // Start WhatsApp client
+  whatsappService.initialize().catch((err) =>
+    console.error("[WA] Initialization error:", err)
+  );
+
+  httpServer.listen(PORT, () => {
     console.log(`[INFO] Server running on port ${PORT}`);
   });
 };

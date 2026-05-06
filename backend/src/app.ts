@@ -6,6 +6,7 @@ import studentRoutes from "./routes/student.routes";
 import enquiryRoutes from "./routes/enquiry.routes";
 import placementRoutes from "./routes/placement.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import whatsAppRoutes from "./routes/whatsapp.routes";
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
