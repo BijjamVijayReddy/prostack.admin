@@ -10,6 +10,8 @@ export interface IUser extends Document {
   password?: string;
   role: string;
   isVerified: boolean;
+  approvalStatus: "pending" | "approved" | "rejected";
+  approvalToken?: string;
   lastLoginAt?: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -56,6 +58,15 @@ const UserSchema = new Schema<IUser>(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    approvalToken: {
+      type: String,
+      default: null,
     },
     lastLoginAt: {
       type: Date,

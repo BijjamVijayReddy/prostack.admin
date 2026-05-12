@@ -229,6 +229,16 @@ export const loginVerifyOtp = async (req: Request, res: Response): Promise<void>
     return;
   }
 
+  // Block pending / rejected accounts
+  if (user.approvalStatus === "pending") {
+    res.status(403).json({ message: "Your account is awaiting super-admin approval. You will be notified by email once approved.", approvalStatus: "pending" });
+    return;
+  }
+  if (user.approvalStatus === "rejected") {
+    res.status(403).json({ message: "Your account registration was not approved. Please contact your administrator.", approvalStatus: "rejected" });
+    return;
+  }
+
   user.lastLoginAt = new Date();
   await user.save();
   await record.deleteOne();

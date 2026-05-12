@@ -233,3 +233,113 @@ export async function sendPaymentReceiptEmail(payload: ReceiptEmailPayload): Pro
   console.log(`[Resend] Receipt email sent to ${maskEmail(studentEmail)}`);
   await logEmail("receipt", studentEmail);
 }
+
+/* ─── Admin Approval Emails ──────────────────────────────── */
+
+export interface ApprovalUserInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  mobileNumber: string;
+}
+
+/** Email to super-admin: new signup awaiting approval */
+export async function sendAdminApprovalRequestEmail(
+  adminEmail: string,
+  user: ApprovalUserInfo,
+  approveUrl: string,
+  rejectUrl: string
+): Promise<void> {
+  const { error } = await getResend().emails.send({
+    from: "ProStack <noreply@prostack-admin.com>",
+    to: adminEmail,
+    subject: `New Admin Registration – ${user.firstName} ${user.lastName} is awaiting approval`,
+    html: `
+<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
+    <tr><td style="background:#f97316;padding:28px 24px 20px;text-align:center;">
+      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#fff7ed;">ProStack Admin</p>
+      <h1 style="margin:10px 0 0;font-size:26px;font-weight:700;color:#ffffff;">New Registration Request</h1>
+    </td></tr>
+    <tr><td style="padding:28px 32px 20px;color:#374151;">
+      <p style="margin:0 0 18px;font-size:15px;">A new user has registered and is awaiting your approval:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Full Name</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">${user.firstName} ${user.lastName}</td></tr>
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Username</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">@${user.username}</td></tr>
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Email</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">${user.email}</td></tr>
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;">Mobile</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;">${user.mobileNumber}</td></tr>
+      </table>
+    </td></tr>
+    <tr><td style="padding:0 32px 32px;">
+      <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">Click one of the buttons below to approve or reject this registration:</p>
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="padding-right:12px;">
+          <a href="${approveUrl}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;">✅ Approve</a>
+        </td>
+        <td>
+          <a href="${rejectUrl}" style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;">❌ Reject</a>
+        </td>
+      </tr></table>
+      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">These links are single-use. Clicking them will immediately update the user's status.</p>
+    </td></tr>
+    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel · This email was sent automatically.</td></tr>
+  </table>
+</div>`,
+  });
+  if (error) console.error("[Resend] Failed to send admin approval email:", error);
+}
+
+/** Email to user: account approved */
+export async function sendUserApprovedEmail(user: ApprovalUserInfo): Promise<void> {
+  const { error } = await getResend().emails.send({
+    from: "ProStack <noreply@prostack-admin.com>",
+    to: user.email,
+    subject: "🎉 Your ProStack account has been approved!",
+    html: `
+<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
+    <tr><td style="background:#16a34a;padding:28px 24px;text-align:center;">
+      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#dcfce7;">ProStack</p>
+      <h1 style="margin:10px 0 0;font-size:28px;font-weight:700;color:#ffffff;">Account Approved! 🎉</h1>
+    </td></tr>
+    <tr><td style="padding:32px;">
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;">Hi <strong>${user.firstName}</strong>,</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">Great news! Your ProStack admin account has been <strong style="color:#16a34a;">approved</strong> by the super admin. You can now log in using your registered credentials.</p>
+      <a href="${process.env.FRONTEND_URL ?? "http://localhost:3000"}/login" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:10px;">Sign In to ProStack →</a>
+      <table style="margin-top:24px;width:100%;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Username</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">@${user.username}</td></tr>
+        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;">Email</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;">${user.email}</td></tr>
+      </table>
+    </td></tr>
+    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel · Welcome to the team!</td></tr>
+  </table>
+</div>`,
+  });
+  if (error) console.error("[Resend] Failed to send approval email to user:", error);
+}
+
+/** Email to user: account rejected */
+export async function sendUserRejectedEmail(user: ApprovalUserInfo): Promise<void> {
+  const { error } = await getResend().emails.send({
+    from: "ProStack <noreply@prostack-admin.com>",
+    to: user.email,
+    subject: "Your ProStack registration request was not approved",
+    html: `
+<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
+    <tr><td style="background:#dc2626;padding:28px 24px;text-align:center;">
+      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#fee2e2;">ProStack</p>
+      <h1 style="margin:10px 0 0;font-size:28px;font-weight:700;color:#ffffff;">Registration Not Approved</h1>
+    </td></tr>
+    <tr><td style="padding:32px;">
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;">Hi <strong>${user.firstName}</strong>,</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">We're sorry, but your ProStack admin account registration has been <strong style="color:#dc2626;">rejected</strong> by the super admin. If you believe this is an error, please contact your administrator directly.</p>
+      <a href="mailto:${process.env.ADMIN_EMAIL ?? "admin@prostack.com"}" style="display:inline-block;background:#6b7280;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:10px;">Contact Administrator</a>
+    </td></tr>
+    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel</td></tr>
+  </table>
+</div>`,
+  });
+  if (error) console.error("[Resend] Failed to send rejection email to user:", error);
+}

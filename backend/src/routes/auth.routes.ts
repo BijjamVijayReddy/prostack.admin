@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, getMe, updateProfile, refreshToken, findUser, resetPassword, resetVerifyOtp } from "../controllers/auth.controller";
+import { login, register, getMe, updateProfile, refreshToken, findUser, resetPassword, resetVerifyOtp, approveUser, rejectUser } from "../controllers/auth.controller";
 import { signupSendOtp, signupVerifyOtp, smsLogin, loginVerifyOtp } from "../controllers/mfa.controller";
 import { protect } from "../middleware/auth.middleware";
 
@@ -18,6 +18,10 @@ router.post("/register",                   register);
 router.post("/find-user",                  findUser);
 router.post("/reset-password/verify-otp",  resetVerifyOtp);
 router.post("/reset-password",             resetPassword);
+
+// ── Admin approval (links sent via email, opened in browser) ─
+router.get("/approve/:token", approveUser);
+router.get("/reject/:token",  rejectUser);
 
 // ── Protected ──────────────────────────────────────────────
 router.get("/me",       protect, getMe);
