@@ -249,7 +249,8 @@ export default function SignupPage() {
         <div className="hidden lg:flex flex-col justify-center items-center w-[55%] relative overflow-hidden sticky top-0 h-screen" style={{ background: "linear-gradient(145deg, #f97316 0%, #ea580c 45%, #c2410c 100%)" }}>
           <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/50 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
-          <svg viewBox="0 0 540 480" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[460px] max-w-[85%] drop-shadow-xl">
+          <div className="animate-float3d">
+          <svg viewBox="0 0 540 480" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[460px] max-w-[85%] drop-shadow-2xl">
             <ellipse cx="270" cy="468" rx="180" ry="10" fill="rgba(79,70,229,0.10)" />
             <rect x="60" y="30" width="240" height="380" rx="20" fill="white" stroke="#e8ebff" strokeWidth="1" />
             <rect x="60" y="30" width="240" height="50" rx="20" fill="#f5f7ff" />
@@ -299,7 +300,8 @@ export default function SignupPage() {
             <line x1="300" y1="186" x2="322" y2="186" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
             <line x1="300" y1="284" x2="322" y2="284" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
           </svg>
-          <div className="mt-8 text-center px-14">
+          </div>
+          <div className="mt-8 text-center px-14 animate-fade-up" style={{ animationDelay: "0.4s" }}>
             <h2 className="text-2xl font-bold text-white">Join your team</h2>
             <p className="mt-2 text-sm text-orange-100 leading-relaxed max-w-sm mx-auto">
               Create your ProStack admin account and start managing students, placements and enquiries today.
@@ -316,6 +318,17 @@ export default function SignupPage() {
         .animate-slide-in {
           animation: slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
+        @keyframes float3d {
+          0%,100% { transform: perspective(900px) rotateX(3deg) rotateY(-4deg) translateY(0px); }
+          33%      { transform: perspective(900px) rotateX(-1deg) rotateY(4deg) translateY(-10px); }
+          66%      { transform: perspective(900px) rotateX(4deg) rotateY(1deg) translateY(-5px); }
+        }
+        .animate-float3d { animation: float3d 8s ease-in-out infinite; will-change: transform; }
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fade-up 0.5s ease-out both; }
       `}</style>
     </>
   );

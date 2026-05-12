@@ -9,8 +9,12 @@ input:focus-visible {
 
 /* Orange text selection highlight */
 ::selection {
-  background-color: #f97316;
-  color: #fff;
+  background-color: #f97316 !important;
+  color: #fff !important;
+}
+::-webkit-selection {
+  background-color: #f97316 !important;
+  color: #fff !important;
 }
 
 /* ── Tell Tailwind to use Roboto as the base sans-serif font ── */

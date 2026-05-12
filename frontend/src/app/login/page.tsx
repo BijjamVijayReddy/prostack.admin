@@ -217,10 +217,10 @@ export default function LoginPage() {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="h-screen w-full flex flex-row-reverse bg-white overflow-hidden">
+      <div className="h-screen w-full flex flex-row-reverse  overflow-hidden" style={{background:"#f0f0f0"}} >
 
         {/* ── FORM PANEL (right) ── */}
-        <div className="flex flex-col justify-center w-full lg:w-[42%] px-8 py-6 lg:px-12 bg-white overflow-y-auto">
+        <div className="flex flex-col justify-center w-full lg:w-[42%] px-8 py-6 lg:px-12  overflow-y-auto" style={{background:"#f0f0f0"}}>
           <div className="w-full max-w-[400px] mx-auto">
 
             {/* Logo */}
@@ -356,8 +356,8 @@ export default function LoginPage() {
 
           {/* Feature list */}
           <div className="space-y-2 mb-3">
-            {features.map(({ Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-2.5">
+            {features.map(({ Icon, title, desc }, i) => (
+              <div key={title} className="flex items-center gap-2.5 animate-fade-up" style={{ animationDelay: `${0.2 + i * 0.15}s` }}>
                 <div className="flex-shrink-0 h-7 w-7 rounded-full bg-orange-500 flex items-center justify-center shadow-sm">
                   <Icon className="h-3.5 w-3.5 text-white" />
                 </div>
@@ -371,7 +371,8 @@ export default function LoginPage() {
 
           {/* Dashboard mockup */}
           <div className="relative flex-1 min-h-0">
-            <svg viewBox="0 0 480 265" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[80%] drop-shadow-lg">
+            <div className="animate-float3d">
+            <svg viewBox="0 0 480 265" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[80%] drop-shadow-2xl">
               <defs>
                 <filter id="loginCardShadow" x="-5%" y="-5%" width="120%" height="120%">
                   <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#00000018"/>
@@ -440,9 +441,10 @@ export default function LoginPage() {
               <path d="M436 210 Q422 202 418 207 Q426 214 436 210Z" fill="#16a34a"/>
               <path d="M436 178 Q450 168 456 174 Q446 182 436 178Z" fill="#4ade80"/>
             </svg>
+            </div>
 
             {/* Success Rate floating card */}
-            <div className="absolute bottom-4 right-4 bg-white rounded-2xl shadow-xl px-3 py-2 w-36 border border-gray-100">
+            <div className="absolute bottom-4 right-4 bg-white rounded-2xl shadow-xl px-3 py-2 w-36 border border-gray-100 animate-float-card">
               <p className="text-[10px] text-gray-500 font-medium">Success Rate</p>
               <p className="text-xl font-extrabold text-gray-900 leading-tight">85%</p>
               <svg viewBox="0 0 130 32" className="w-full my-1.5">
@@ -492,6 +494,22 @@ export default function LoginPage() {
       <style jsx global>{`
         @keyframes slide-in { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .animate-slide-in { animation: slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        @keyframes float3d {
+          0%,100% { transform: perspective(900px) rotateX(3deg) rotateY(-4deg) translateY(0px); }
+          33%      { transform: perspective(900px) rotateX(-1deg) rotateY(4deg) translateY(-10px); }
+          66%      { transform: perspective(900px) rotateX(4deg) rotateY(1deg) translateY(-5px); }
+        }
+        .animate-float3d { animation: float3d 8s ease-in-out infinite; will-change: transform; }
+        @keyframes float-card {
+          0%,100% { transform: translateY(0px) rotate(-1deg); }
+          50%      { transform: translateY(-10px) rotate(1deg); }
+        }
+        .animate-float-card { animation: float-card 4s ease-in-out infinite; }
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fade-up 0.5s ease-out both; }
       `}</style>
     </>
   );
