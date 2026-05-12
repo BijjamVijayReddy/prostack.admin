@@ -7,7 +7,7 @@ export interface IUser extends Document {
   email?: string;
   mobileNumber: string;
   username?: string;
-  password: string;
+  password?: string;
   role: string;
   isVerified: boolean;
   lastLoginAt?: Date;
@@ -46,7 +46,6 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
       minlength: 6,
     },
     role: {
@@ -67,7 +66,7 @@ const UserSchema = new Schema<IUser>(
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.password || !this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
@@ -76,6 +75,7 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.comparePassword = async function (
   candidate: string
 ): Promise<boolean> {
+  if (!this.password) return false;
   return bcrypt.compare(candidate, this.password);
 };
 

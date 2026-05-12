@@ -139,10 +139,10 @@ export const signupVerifyOtp = async (req: Request, res: Response): Promise<void
 
 /* POST /api/auth/login */
 export const smsLogin = async (req: Request, res: Response): Promise<void> => {
-  const { identifier, password } = req.body as { identifier?: string; password?: string };
+  const { identifier } = req.body as { identifier?: string };
 
-  if (!identifier || !password) {
-    res.status(400).json({ message: "Username/email/mobile and password are required." });
+  if (!identifier) {
+    res.status(400).json({ message: "Username, email or mobile is required." });
     return;
   }
 
@@ -155,8 +155,8 @@ export const smsLogin = async (req: Request, res: Response): Promise<void> => {
     ],
   });
 
-  if (!user || !(await user.comparePassword(password))) {
-    res.status(401).json({ message: "Invalid credentials. Please try again." });
+  if (!user) {
+    res.status(404).json({ message: "No account found with that username, email, or mobile number." });
     return;
   }
 
