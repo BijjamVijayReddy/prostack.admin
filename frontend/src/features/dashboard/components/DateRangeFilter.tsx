@@ -153,7 +153,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
         onClick={() => { setOpen(v => !v); setShowCustom(false); }}
         className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer hover:scale-[1.04] hover:shadow-lg active:scale-[0.97]"
         style={{
-          backgroundColor: "#1a1a2e",
+          backgroundColor: "#f97316",
           color: "#e8e8f0",
           border: "1px solid rgba(255,255,255,0.12)",
         }}
@@ -161,7 +161,7 @@ export function DateRangeFilter({ value, onChange }: Props) {
         <CalendarDaysIcon className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "inherit" }} />
         <span>{value.preset !== "custom" ? PRESET_NAMES[value.preset] : value.label}</span>
         {value.preset !== "custom" && (
-          <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 400 }}>
+          <span style={{ color: "white", fontWeight: 400 }}>
             {value.preset === "this_year"
               ? new Date().getFullYear()
               : (() => {
