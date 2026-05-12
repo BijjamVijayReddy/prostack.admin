@@ -180,9 +180,21 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginOtpEmail, otp }),
       });
-      const json = await res.json() as { token?: string; message?: string };
-      if (res.ok && json.token) { await loginWithToken(json.token); router.replace("/"); }
-      else setLoginOtpError(json.message ?? "Invalid OTP. Please try again.");
+      const json = await res.json() as { token?: string; message?: string; approvalStatus?: string };
+      if (res.ok && json.token) {
+        await loginWithToken(json.token);
+        router.replace("/");
+      } else if (res.status === 403 && json.approvalStatus === "pending") {
+        setLoginOtpError("");
+        setMode("login");
+        setToast({ message: "⏳ Your account is pending super-admin approval. You will be notified by email once approved.", type: "error" });
+      } else if (res.status === 403 && json.approvalStatus === "rejected") {
+        setLoginOtpError("");
+        setMode("login");
+        setToast({ message: "❌ Your account registration was not approved. Please contact your administrator.", type: "error" });
+      } else {
+        setLoginOtpError(json.message ?? "Invalid OTP. Please try again.");
+      }
     } catch { setLoginOtpError("Unable to reach server. Please try again later."); }
     setIsLoading(false);
   };

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   UserIcon,
@@ -64,9 +63,9 @@ function Toast({
 
 /* ─── Signup Page ─────────────────────────────────────────── */
 export default function SignupPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
   useEffect(() => { document.title = "ProStack - Create Account"; }, []);
@@ -86,11 +85,10 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json = await res.json() as { message?: string };
+      const json = await res.json() as { message?: string; pending?: boolean };
 
-      if (res.ok) {
-        setToast({ message: "Account created! Redirecting to login…", type: "success" });
-        setTimeout(() => router.replace("/login"), 1800);
+      if (res.ok || res.status === 202) {
+        setPendingApproval(true);
       } else if (res.status === 409) {
         const msg = json.message ?? "";
         if (msg.toLowerCase().includes("email"))        setError("email",        { message: msg });
@@ -151,7 +149,7 @@ export default function SignupPage() {
       <div className="min-h-screen w-full flex" style={{ background: "#f1f5f9" }}>
 
         {/* ── LEFT: Form Panel ── */}
-        <div className="flex flex-col justify-center w-full lg:w-[45%] px-8 py-10 lg:px-14 overflow-y-auto" style={{ background: "linear-gradient(160deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)" }}>
+        <div className="flex flex-col justify-center w-full lg:w-[45%] px-8 py-10 lg:px-14 overflow-y-auto" style={{ background: "#f0f0f0" }}>
           <div className="w-full max-w-[400px] mx-auto">
 
             {/* Logo + Brand */}
@@ -162,6 +160,34 @@ export default function SignupPage() {
               <span className="text-base font-bold text-gray-800 tracking-wide">ProStack</span>
             </div>
 
+            {/* ── Pending Approval Screen ── */}
+            {pendingApproval ? (
+              <div className="flex flex-col items-center text-center gap-5">
+                <div className="h-20 w-20 rounded-full bg-orange-100 flex items-center justify-center">
+                  <svg className="h-10 w-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Registration Submitted!</h2>
+                  <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-xs mx-auto">
+                    Your account is <strong className="text-orange-500">pending super-admin approval</strong>. You will receive an email once your account is reviewed.
+                  </p>
+                </div>
+                <div className="w-full rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-left space-y-2">
+                  <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">What happens next?</p>
+                  <div className="flex items-start gap-2 text-sm text-gray-600"><span className="text-orange-400 font-bold mt-0.5">1.</span><span>The super-admin receives your registration details by email.</span></div>
+                  <div className="flex items-start gap-2 text-sm text-gray-600"><span className="text-orange-400 font-bold mt-0.5">2.</span><span>They click <strong>Approve</strong> or <strong>Reject</strong> in the email.</span></div>
+                  <div className="flex items-start gap-2 text-sm text-gray-600"><span className="text-orange-400 font-bold mt-0.5">3.</span><span>You get an email notification with the result.</span></div>
+                  <div className="flex items-start gap-2 text-sm text-gray-600"><span className="text-orange-400 font-bold mt-0.5">4.</span><span>If approved, you can sign in immediately.</span></div>
+                </div>
+                <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition">
+                  <ArrowLeftIcon className="h-4 w-4" />
+                  Back to Sign In
+                </Link>
+              </div>
+            ) : (
+            <>
             <div className="mb-7">
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create your account</h1>
               <p className="mt-2 text-sm text-gray-500">Register as a ProStack admin</p>
@@ -242,6 +268,8 @@ export default function SignupPage() {
             <p className="mt-6 text-xs text-gray-400 text-center">
               © {new Date().getFullYear()} ProStack. All rights reserved.
             </p>
+            </>
+            )}
           </div>
         </div>
 
