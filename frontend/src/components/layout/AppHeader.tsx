@@ -82,11 +82,11 @@ export function AppHeader({ rightSlot }: AppHeaderProps) {
   const role = rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase();
   const isOwner = rawRole.toLowerCase() === "owner";
   // Soft indigo pill
-  const avatarBg       = "#1E3A8A";
-  const pillBg         = "#EEF2FF";
-  const pillText       = "#3730a3";
-  const roleBadgeBg    = isOwner ? "#fef3c7" : "#ede9fe";   // soft badge inside dropdown
-  const roleBadgeColor = isOwner ? "#92400e" : "#4338ca";
+  const avatarBg       = "#f97316";
+  const pillBg         = "#f0fdf4";
+  const pillText       = "#15803d";
+  const roleBadgeBg    = isOwner ? "#fef3c7" : "#dcfce7";   // soft badge inside dropdown
+  const roleBadgeColor = isOwner ? "#92400e" : "#166534";
   const firstLetter = userName.charAt(0).toUpperCase();
   const lastLoginFormatted = user?.lastLoginAt
     ? new Date(user.lastLoginAt).toLocaleString("en-IN", {

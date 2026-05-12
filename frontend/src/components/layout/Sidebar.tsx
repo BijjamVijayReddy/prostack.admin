@@ -96,8 +96,8 @@ export function Sidebar() {
                   rounded-xl px-3 py-3 transition
                   ${
                     isActive
-                      ? "bg-white/15 text-white"
-                      : "text-gray-400 hover:bg-white/10 hover:text-white"
+                      ? "bg-orange-500 text-white"
+                      : "text-gray-400 hover:bg-orange-500/20 hover:text-white"
                   }
                 `}
               >
@@ -203,7 +203,7 @@ export function Sidebar() {
               key={item.key}
               onClick={() => router.push(ROUTE_MAP[item.key])}
               className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-                isActive ? "text-white bg-white/15" : "text-gray-400"
+                isActive ? "text-white bg-orange-500" : "text-gray-400"
               }`}
             >
               {item.key === "messages" ? (

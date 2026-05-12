@@ -92,10 +92,10 @@ export function StudentFormModal({ open, onClose, student, onSaved, onError }: P
             </Dialog.Title>
             <div className="flex items-center gap-2">
               {isEdit && fmtUpdated(student?.updatedAt) && (
-                <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3 py-1">
-                  <ClockIcon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
-                  <span className="text-[11px] font-medium text-indigo-500 whitespace-nowrap">
-                    Last updated: <span className="font-semibold text-indigo-700">{fmtUpdated(student?.updatedAt)}</span>
+                <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-green-50 border border-green-100 px-3 py-1">
+                  <ClockIcon className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  <span className="text-[11px] font-medium text-green-600 whitespace-nowrap">
+                    Last updated: <span className="font-semibold text-green-700">{fmtUpdated(student?.updatedAt)}</span>
                   </span>
                 </div>
               )}

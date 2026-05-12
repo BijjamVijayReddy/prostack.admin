@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Remove browser native focus outline from all inputs */
+input:focus,
+input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Orange text selection highlight */
+::selection {
+  background-color: #f97316;
+  color: #fff;
+}
+
 /* ── Tell Tailwind to use Roboto as the base sans-serif font ── */
 @theme inline {
   --font-sans: 'Roboto', sans-serif;

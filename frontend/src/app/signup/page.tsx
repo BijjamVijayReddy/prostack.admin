@@ -118,11 +118,11 @@ export default function SignupPage() {
     }
   ) => (
     <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider">
+      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
         {label}
       </label>
       <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500">
           {opts.icon}
         </span>
         <input
@@ -130,16 +130,16 @@ export default function SignupPage() {
           type={opts.type ?? "text"}
           autoComplete={opts.autoComplete}
           placeholder={opts.placeholder}
-          className={`w-full rounded-xl border bg-white/5 py-3 pl-10 ${opts.suffix ? "pr-11" : "pr-4"} text-sm text-white placeholder-gray-500 outline-none transition focus:ring-2
+          className={`w-full rounded-xl border bg-gray-50 py-3 pl-10 ${opts.suffix ? "pr-11" : "pr-4"} text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:ring-2 focus:bg-white
             ${errors[name]
-              ? "border-red-500 focus:ring-red-500/40"
-              : "border-white/10 focus:border-indigo-500 focus:ring-indigo-500/30"
+              ? "border-red-400 focus:ring-red-400/20"
+              : "border-gray-200 focus:border-orange-400 focus:ring-orange-400/20"
             }`}
         />
         {opts.suffix}
       </div>
       {errors[name] && (
-        <p className="text-xs text-red-400 mt-0.5">{errors[name]?.message}</p>
+        <p className="text-xs text-red-500 mt-0.5">{errors[name]?.message}</p>
       )}
     </div>
   );
@@ -148,116 +148,164 @@ export default function SignupPage() {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="relative min-h-screen w-full bg-[#060C1A] flex flex-col items-center justify-center p-4 py-10 overflow-hidden">
+      <div className="min-h-screen w-full flex" style={{ background: "#f1f5f9" }}>
 
-        {/* Grid pattern */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
+        {/* ── LEFT: Form Panel ── */}
+        <div className="flex flex-col justify-center w-full lg:w-[45%] px-8 py-10 lg:px-14 overflow-y-auto" style={{ background: "linear-gradient(160deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)" }}>
+          <div className="w-full max-w-[400px] mx-auto">
 
-        {/* Glow blobs */}
-        <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-600/20 blur-3xl" />
-
-        {/* Card */}
-        <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-2xl p-8">
-
-          {/* Logo + Brand */}
-          <div className="mb-7 flex flex-col items-center gap-3">
-            <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 overflow-hidden">
-              <Image src="/proStacklogo.png" alt="ProStack Logo" width={48} height={48} className="object-contain" />
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Create your account</h1>
-              <p className="mt-1 text-sm text-gray-400">Register as a ProStack admin</p>
-            </div>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
-            {/* Name row */}
-            <div className="grid grid-cols-2 gap-4">
-              {field("First Name", "firstName", { placeholder: "First name", icon: <UserIcon className="h-4 w-4" /> })}
-              {field("Last Name",  "lastName",  { placeholder: "Last name",  icon: <UserIcon className="h-4 w-4" /> })}
+            {/* Logo + Brand */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-10 w-10 rounded-xl overflow-hidden shadow-sm flex items-center justify-center" style={{ background: "#ea580c" }}>
+                <Image src="/proStacklogo.png" alt="ProStack" width={30} height={30} className="object-contain" />
+              </div>
+              <span className="text-base font-bold text-gray-800 tracking-wide">ProStack</span>
             </div>
 
-            {field("Email", "email", {
-              type: "email",
-              placeholder: "you@example.com",
-              icon: <EnvelopeIcon className="h-4 w-4" />,
-              autoComplete: "email",
-            })}
+            <div className="mb-7">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Create your account</h1>
+              <p className="mt-2 text-sm text-gray-500">Register as a ProStack admin</p>
+            </div>
 
-            {field("Mobile Number", "mobileNumber", {
-              placeholder: "10-digit mobile number",
-              icon: <PhoneIcon className="h-4 w-4" />,
-              autoComplete: "tel",
-            })}
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              <div className="grid grid-cols-2 gap-4">
+                {field("First Name", "firstName", { placeholder: "First name", icon: <UserIcon className="h-4 w-4" /> })}
+                {field("Last Name",  "lastName",  { placeholder: "Last name",  icon: <UserIcon className="h-4 w-4" /> })}
+              </div>
 
-            {field("Username", "username", {
-              placeholder: "Choose a username",
-              icon: <UserIcon className="h-4 w-4" />,
-              autoComplete: "username",
-            })}
+              {field("Email", "email", {
+                type: "email",
+                placeholder: "you@example.com",
+                icon: <EnvelopeIcon className="h-4 w-4" />,
+                autoComplete: "email",
+              })}
 
-            {field("Password", "password", {
-              type: showPassword ? "text" : "password",
-              placeholder: "Min. 6 characters",
-              icon: <LockClosedIcon className="h-4 w-4" />,
-              autoComplete: "new-password",
-              suffix: (
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                </button>
-              ),
-            })}
+              {field("Mobile Number", "mobileNumber", {
+                placeholder: "10-digit mobile number",
+                icon: <PhoneIcon className="h-4 w-4" />,
+                autoComplete: "tel",
+              })}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-[0.98] cursor-pointer transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3V0a12 12 0 100 24v-4l-3 3 3 3v4A12 12 0 014 12z" />
-                  </svg>
-                  Creating account…
-                </span>
-              ) : (
-                "Create Account"
-              )}
-            </button>
-          </form>
+              {field("Username", "username", {
+                placeholder: "Choose a username",
+                icon: <UserIcon className="h-4 w-4" />,
+                autoComplete: "username",
+              })}
 
-          {/* Back to login */}
-          <div className="mt-5 flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-            <Link
-              href="/login"
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition"
-            >
-              <ArrowLeftIcon className="h-3.5 w-3.5" />
-              Already have an account? Sign in
-            </Link>
+              {field("Password", "password", {
+                type: showPassword ? "text" : "password",
+                placeholder: "Min. 6 characters",
+                icon: <LockClosedIcon className="h-4 w-4" />,
+                autoComplete: "new-password",
+                suffix: (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                ),
+              })}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-md shadow-orange-200 hover:bg-orange-600 active:scale-[0.98] cursor-pointer transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3V0a12 12 0 100 24v-4l-3 3 3 3v4A12 12 0 014 12z" />
+                    </svg>
+                    Creating account…
+                  </span>
+                ) : (
+                  "Create Account"
+                )}
+              </button>
+            </form>
+
+            <div className="mt-5 flex items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5" />
+                Already have an account? Sign in
+              </Link>
+            </div>
+
+            <p className="mt-6 text-xs text-gray-400 text-center">
+              © {new Date().getFullYear()} ProStack. All rights reserved.
+            </p>
           </div>
         </div>
 
-        <p className="mt-8 text-xs text-gray-600">
-          © {new Date().getFullYear()} ProStack. All rights reserved.
-        </p>
+        {/* ── RIGHT: Illustration Panel ── */}
+        <div className="hidden lg:flex flex-col justify-center items-center w-[55%] relative overflow-hidden sticky top-0 h-screen" style={{ background: "linear-gradient(145deg, #f97316 0%, #ea580c 45%, #c2410c 100%)" }}>
+          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/50 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
+          <svg viewBox="0 0 540 480" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[460px] max-w-[85%] drop-shadow-xl">
+            <ellipse cx="270" cy="468" rx="180" ry="10" fill="rgba(79,70,229,0.10)" />
+            <rect x="60" y="30" width="240" height="380" rx="20" fill="white" stroke="#e8ebff" strokeWidth="1" />
+            <rect x="60" y="30" width="240" height="50" rx="20" fill="#f5f7ff" />
+            <rect x="60" y="60" width="240" height="20" fill="#f5f7ff" />
+            <rect x="150" y="48" width="80" height="8" rx="4" fill="#c7d2fe" />
+            <circle cx="180" cy="132" r="40" fill="#eef2ff" />
+            <circle cx="180" cy="116" r="16" fill="#c7d2fe" />
+            <ellipse cx="180" cy="154" rx="24" ry="18" fill="#c7d2fe" />
+            <circle cx="208" cy="158" r="14" fill="#4f46e5" />
+            <rect x="201" y="156" width="14" height="4" rx="2" fill="white" />
+            <rect x="206" y="151" width="4" height="14" rx="2" fill="white" />
+            <rect x="84" y="188" width="192" height="32" rx="8" fill="#f5f7ff" stroke="#e8ebff" strokeWidth="1" />
+            <rect x="100" y="200" width="80" height="8" rx="4" fill="#c7d2fe" />
+            <rect x="84" y="230" width="192" height="32" rx="8" fill="#f5f7ff" stroke="#e8ebff" strokeWidth="1" />
+            <rect x="100" y="242" width="100" height="8" rx="4" fill="#c7d2fe" />
+            <rect x="84" y="272" width="192" height="32" rx="8" fill="#f5f7ff" stroke="#e8ebff" strokeWidth="1" />
+            <rect x="100" y="284" width="64" height="8" rx="4" fill="#c7d2fe" />
+            <rect x="84" y="314" width="192" height="32" rx="8" fill="#f5f7ff" stroke="#e8ebff" strokeWidth="1" />
+            <rect x="100" y="326" width="72" height="8" rx="4" fill="#c7d2fe" />
+            <rect x="84" y="360" width="192" height="36" rx="10" fill="#4f46e5" />
+            <rect x="138" y="374" width="84" height="8" rx="4" fill="white" />
+            <rect x="322" y="50" width="160" height="76" rx="14" fill="white" stroke="#e8ebff" strokeWidth="1" />
+            <circle cx="356" cy="88" r="20" fill="#dbeafe" />
+            <circle cx="356" cy="80" r="8" fill="#93c5fd" />
+            <ellipse cx="356" cy="100" rx="13" ry="10" fill="#93c5fd" />
+            <rect x="385" y="77" width="80" height="8" rx="4" fill="#e8ebff" />
+            <rect x="385" y="93" width="56" height="7" rx="3.5" fill="#e8ebff" />
+            <circle cx="469" cy="54" r="12" fill="#4ade80" />
+            <path d="M463 54 L467 58 L475 50" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="322" y="148" width="160" height="76" rx="14" fill="white" stroke="#e8ebff" strokeWidth="1" />
+            <circle cx="356" cy="186" r="20" fill="#fce7f3" />
+            <circle cx="356" cy="178" r="8" fill="#f9a8d4" />
+            <ellipse cx="356" cy="198" rx="13" ry="10" fill="#f9a8d4" />
+            <rect x="385" y="175" width="80" height="8" rx="4" fill="#e8ebff" />
+            <rect x="385" y="191" width="56" height="7" rx="3.5" fill="#e8ebff" />
+            <circle cx="469" cy="152" r="12" fill="#4ade80" />
+            <path d="M463 152 L467 156 L475 148" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="322" y="246" width="160" height="76" rx="14" fill="white" stroke="#e8ebff" strokeWidth="1" />
+            <circle cx="356" cy="284" r="20" fill="#fef3c7" />
+            <circle cx="356" cy="276" r="8" fill="#fcd34d" />
+            <ellipse cx="356" cy="296" rx="13" ry="10" fill="#fcd34d" />
+            <rect x="385" y="273" width="80" height="8" rx="4" fill="#e8ebff" />
+            <rect x="385" y="289" width="56" height="7" rx="3.5" fill="#e8ebff" />
+            <circle cx="469" cy="250" r="12" fill="#a78bfa" />
+            <rect x="463" y="248" width="12" height="4" rx="2" fill="white" />
+            <line x1="300" y1="88" x2="322" y2="88" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
+            <line x1="300" y1="186" x2="322" y2="186" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
+            <line x1="300" y1="284" x2="322" y2="284" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
+          </svg>
+          <div className="mt-8 text-center px-14">
+            <h2 className="text-2xl font-bold text-white">Join your team</h2>
+            <p className="mt-2 text-sm text-orange-100 leading-relaxed max-w-sm mx-auto">
+              Create your ProStack admin account and start managing students, placements and enquiries today.
+            </p>
+          </div>
+        </div>
       </div>
 
       <style jsx global>{`
