@@ -42,18 +42,18 @@ export function buildCertificateId(admissionNo: string, stream: string, course: 
 }
 
 /**
- * Generate a PDF completion certificate as a Buffer (A4 Landscape).
+ * Generate a PDF completion certificate as a Buffer (landscape, 900×636).
  */
 export async function generateCertificate(data: CertificateData): Promise<Buffer> {
   const qrBuffer = await QRCode.toBuffer(
     `https://prostackacademy.com/verify/${data.certificateId}`,
-    { type: "png", width: 100, margin: 1, color: { dark: "#000000", light: "#ffffff" } }
+    { type: "png", width: 110, margin: 1, color: { dark: "#000000", light: "#ffffff" } }
   );
 
   return new Promise((resolve, reject) => {
-    const W  = 841.89;
-    const H  = 595.28;
-    const cx = W / 2;
+    const W  = 900;
+    const H  = 636;
+    const cx = W / 2;   // 450
 
     const doc = new PDFDocument({ size: [W, H], margin: 0 });
     const chunks: Buffer[] = [];
@@ -68,178 +68,206 @@ export async function generateCertificate(data: CertificateData): Promise<Buffer
     const GRAY  = "#6b7280";
     const DARK  = "#1f2937";
 
-    // ── Background ────────────────────────────────────────────────
+    // ── White background ──────────────────────────────────────────
     doc.rect(0, 0, W, H).fill(WHITE);
 
-    // ── Navy corner triangles (all 4 corners) ─────────────────────
-    const TRI = 165;
+    // ── Navy corner triangles ─────────────────────────────────────
+    const TRI = 190;
     doc.save().polygon([0,0],[TRI,0],[0,TRI]).fill(NAVY).restore();
     doc.save().polygon([W,0],[W-TRI,0],[W,TRI]).fill(NAVY).restore();
     doc.save().polygon([0,H],[TRI,H],[0,H-TRI]).fill(NAVY).restore();
     doc.save().polygon([W,H],[W-TRI,H],[W,H-TRI]).fill(NAVY).restore();
 
-    // ── Gold double border ─────────────────────────────────────────
-    const B1 = 16, B2 = 25;
-    doc.rect(B1, B1, W-B1*2, H-B1*2).lineWidth(2.5).strokeColor(GOLD).stroke();
-    doc.rect(B2, B2, W-B2*2, H-B2*2).lineWidth(0.8).strokeColor(GOLD).stroke();
+    // ── Octagonal gold borders (aligned to triangle diagonals) ────
+    // For a corner triangle whose hypotenuse = x+y = TRI,
+    // the border at inset B cuts it at (B, TRI-B) and (TRI-B, B).
+    const B1 = 16, B2 = 26;
+    const co1 = TRI - B1;   // 174
+    const co2 = TRI - B2;   // 164
 
-    // ── Logo (top-left over triangle) ─────────────────────────────
+    // Outer thick octagonal border
+    doc.moveTo(B1, co1).lineTo(co1, B1)
+       .lineTo(W - co1, B1).lineTo(W - B1, co1)
+       .lineTo(W - B1, H - co1).lineTo(W - co1, H - B1)
+       .lineTo(co1, H - B1).lineTo(B1, H - co1)
+       .closePath().lineWidth(2.5).strokeColor(GOLD).stroke();
+
+    // Inner thin octagonal border
+    doc.moveTo(B2, co2).lineTo(co2, B2)
+       .lineTo(W - co2, B2).lineTo(W - B2, co2)
+       .lineTo(W - B2, H - co2).lineTo(W - co2, H - B2)
+       .lineTo(co2, H - B2).lineTo(B2, H - co2)
+       .closePath().lineWidth(0.8).strokeColor(GOLD).stroke();
+
+    // ── Diagonal watermark ────────────────────────────────────────
+    doc.save();
+    doc.translate(cx, H / 2);
+    doc.rotate(-32);
+    doc.fillColor(NAVY, 0.07).font("Helvetica-Bold").fontSize(60)
+       .text("PRO STACK ACADEMY", -280, -34, { width: 560, align: "center", lineBreak: false });
+    doc.restore();
+    doc.fillColor(WHITE); // reset color state
+
+    // ── Logo (top-left) ───────────────────────────────────────────
     const lp1 = path.join(process.cwd(), "frontend", "public", "proStacklogo.png");
     const lp2 = path.join(__dirname, "../../../frontend/public/proStacklogo.png");
     const lp  = fs.existsSync(lp1) ? lp1 : fs.existsSync(lp2) ? lp2 : null;
     if (lp) {
-      doc.image(lp, 30, 25, { fit: [118, 38] });
+      doc.image(lp, 32, 26, { fit: [122, 40] });
     } else {
-      doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(13).text("Pro Stack", 33, 30);
-      doc.fillColor(GOLD2).font("Helvetica").fontSize(9).text("Academy", 33, 46);
+      doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(13).text("Pro Stack", 35, 30);
+      doc.fillColor(GOLD2).font("Helvetica").fontSize(9).text("Academy", 35, 46);
     }
 
-    // ── Certificate ID (top-right) ─────────────────────────────────
+    // ── Certificate ID (top-right) ────────────────────────────────
     doc.fillColor(WHITE).font("Helvetica").fontSize(9)
-       .text(`Certificate ID:  ${data.certificateId}`, W - 272, 37, { width: 238, align: "right" });
+       .text(`Certificate ID:  ${data.certificateId}`, W - 285, 38, { width: 252, align: "right" });
 
     // ─────────────────────────────────────────────────────────────
     // MAIN CONTENT  (centred)
     // ─────────────────────────────────────────────────────────────
 
     // "C E R T I F I C A T E"
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(15)
-       .text("C  E  R  T  I  F  I  C  A  T  E", 0, 68, { align: "center", width: W });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(14)
+       .text("C  E  R  T  I  F  I  C  A  T  E", 0, 72, { align: "center", width: W });
 
     // "OF COMPLETION"
-    doc.fillColor(NAVY).font("Helvetica-Bold").fontSize(36)
-       .text("OF COMPLETION", 0, 86, { align: "center", width: W });
+    doc.fillColor(NAVY).font("Helvetica-Bold").fontSize(38)
+       .text("OF COMPLETION", 0, 90, { align: "center", width: W });
 
-    // ── Gold decoration line "— ◆ —" ─────────────────────────────
-    const dY    = 138;
-    const lineS = 148;          // line start x (left)
-    const lineE = W - 148;      // line end x (right)
-    const gap   = 52;           // half-gap around the center diamond
+    // ── Gold decoration line  — ◆ — ──────────────────────────────
+    const dY    = 148;
+    const lineS = 155;
+    const lineE = W - 155;
+    const gap   = 56;
 
     doc.moveTo(lineS, dY).lineTo(cx - gap, dY).lineWidth(1.2).strokeColor(GOLD).stroke();
     doc.moveTo(cx + gap, dY).lineTo(lineE, dY).lineWidth(1.2).strokeColor(GOLD).stroke();
-    // Left dot
     doc.circle(cx - gap - 10, dY, 2.5).fillColor(GOLD).fill();
-    // Center diamond
     doc.save().translate(cx, dY).rotate(45)
        .rect(-6, -6, 12, 12).fillColor(GOLD).fill().restore();
-    // Right dot
     doc.circle(cx + gap + 10, dY, 2.5).fillColor(GOLD).fill();
 
     // "This is to certify that"
     doc.fillColor(DARK).font("Helvetica").fontSize(11)
-       .text("This is to certify that", 0, 154, { align: "center", width: W });
+       .text("This is to certify that", 0, 162, { align: "center", width: W });
 
-    // ── Student Name ──────────────────────────────────────────────
+    // ── Student name ──────────────────────────────────────────────
     doc.fillColor(NAVY).font("Times-BoldItalic").fontSize(40)
-       .text(data.studentName, 0, 170, { align: "center", width: W });
+       .text(data.studentName, 0, 178, { align: "center", width: W });
 
-    // Name underline (gold, centred, proportional to name width)
-    const nameW = Math.min(doc.widthOfString(data.studentName) * 1.05, 380);
-    doc.moveTo(cx - nameW / 2, 222)
-       .lineTo(cx + nameW / 2, 222)
+    // Gold underline proportional to name
+    const nameW = Math.min(doc.widthOfString(data.studentName) * 1.05, 400);
+    doc.moveTo(cx - nameW / 2, 230)
+       .lineTo(cx + nameW / 2, 230)
        .lineWidth(1.3).strokeColor(GOLD).stroke();
 
     // "has successfully completed the"
     doc.fillColor(DARK).font("Helvetica").fontSize(11)
-       .text("has successfully completed the", 0, 232, { align: "center", width: W });
+       .text("has successfully completed the", 0, 240, { align: "center", width: W });
 
     // Course name
     doc.fillColor(NAVY).font("Helvetica-Bold").fontSize(24)
-       .text(data.course, 0, 250, { align: "center", width: W });
+       .text(data.course, 0, 258, { align: "center", width: W });
 
     // Stream / programme
     doc.fillColor(GRAY).font("Helvetica").fontSize(13)
-       .text(data.stream, 0, 284, { align: "center", width: W });
+       .text(data.stream, 0, 293, { align: "center", width: W });
 
     // Date range
     doc.fillColor(DARK).font("Helvetica").fontSize(10.5)
        .text(
          `This course was conducted from ${data.startMonthYear} to ${data.endMonthYear}.`,
-         0, 308, { align: "center", width: W }
+         0, 318, { align: "center", width: W }
        );
     doc.fillColor(DARK).font("Helvetica").fontSize(10.5)
-       .text("We wish the student all the best for future endeavors.", 0, 323, { align: "center", width: W });
+       .text("We wish the student all the best for future endeavors.", 0, 334, { align: "center", width: W });
 
     // ─────────────────────────────────────────────────────────────
     // BOTTOM SECTION:  Signature | Seal | Issue Date | QR Code
     // ─────────────────────────────────────────────────────────────
-    const sigLineY = 490;   // y of the horizontal signature / date underline
-    const sigX     = 90;    // left edge of signature block
-    const dateX    = 535;   // left edge of issue-date block
-    const sealCX   = cx;    // seal perfectly centred horizontally
-    const sealCY   = 458;   // centre-y of seal
-    const sealR    = 46;
+    const sigLineY = 526;
+    const sigX     = 88;
+    const dateX    = 578;
+    const sealCX   = cx;       // 450
+    const sealCY   = 476;
+    const sealR    = 54;
 
     // ── Signature ─────────────────────────────────────────────────
-    // Cursive-looking signature text above the line
     doc.fillColor(DARK).font("Times-BoldItalic").fontSize(18)
-       .text("Bijjam Vijay", sigX, sigLineY - 38, { width: 155 });
-    // Underline
-    doc.moveTo(sigX, sigLineY).lineTo(sigX + 150, sigLineY)
+       .text("Bijjam Vijay", sigX, sigLineY - 42, { width: 160 });
+    doc.moveTo(sigX, sigLineY).lineTo(sigX + 158, sigLineY)
        .lineWidth(0.7).strokeColor("#9ca3af").stroke();
-    // Caption
     doc.fillColor(DARK).font("Helvetica-Bold").fontSize(10)
-       .text("Mr. Bijjam Vijay", sigX, sigLineY + 8);
+       .text("Mr. Bijjam Vijay", sigX, sigLineY + 9);
     doc.fillColor(GRAY).font("Helvetica").fontSize(9)
-       .text("Founder & CEO",    sigX, sigLineY + 22)
-       .text("Pro Stack Academy", sigX, sigLineY + 35);
+       .text("Founder & CEO",     sigX, sigLineY + 23)
+       .text("Pro Stack Academy", sigX, sigLineY + 36);
 
-    // ── Gold ornate seal ──────────────────────────────────────────
-    // Outer serrated ring (spike rays)
-    const SPIKES = 28;
+    // ── Ornate gold seal ──────────────────────────────────────────
+    // Dense alternating spike ring (like a coin / medallion edge)
+    const SPIKES = 44;
     for (let i = 0; i < SPIKES; i++) {
       const a  = (i / SPIKES) * Math.PI * 2;
-      const x1 = sealCX + sealR * Math.cos(a);
-      const y1 = sealCY + sealR * Math.sin(a);
-      const x2 = sealCX + (sealR - 9) * Math.cos(a);
-      const y2 = sealCY + (sealR - 9) * Math.sin(a);
-      doc.moveTo(x1, y1).lineTo(x2, y2).lineWidth(2).strokeColor(GOLD).stroke();
+      const r1 = i % 2 === 0 ? sealR : sealR - 3;
+      const r2 = sealR - 11;
+      doc.moveTo(sealCX + r1 * Math.cos(a), sealCY + r1 * Math.sin(a))
+         .lineTo(sealCX + r2 * Math.cos(a), sealCY + r2 * Math.sin(a))
+         .lineWidth(2.2).strokeColor(GOLD).stroke();
     }
     // Outer gold ring
-    doc.circle(sealCX, sealCY, sealR).lineWidth(3).strokeColor(GOLD).stroke();
+    doc.circle(sealCX, sealCY, sealR).lineWidth(3.5).strokeColor(GOLD).stroke();
+    // Second ring
+    doc.circle(sealCX, sealCY, sealR - 11).lineWidth(1.5).strokeColor(GOLD).stroke();
+    // Laurel dot ring between the two circles
+    const LDOTS = 34;
+    for (let i = 0; i < LDOTS; i++) {
+      const a = (i / LDOTS) * Math.PI * 2;
+      const r = sealR - 16;
+      doc.circle(sealCX + r * Math.cos(a), sealCY + r * Math.sin(a), 1.9)
+         .fillColor(GOLD2).fill();
+    }
     // Inner ring
-    doc.circle(sealCX, sealCY, sealR - 7).lineWidth(1).strokeColor(GOLD2).stroke();
+    doc.circle(sealCX, sealCY, sealR - 20).lineWidth(1).strokeColor(GOLD2).stroke();
     // Navy filled disc
-    doc.circle(sealCX, sealCY, sealR - 10).fillColor(NAVY).fill();
+    doc.circle(sealCX, sealCY, sealR - 23).fillColor(NAVY).fill();
+    // Stars at top
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7)
+       .text("★  ★  ★", sealCX - 18, sealCY - 34, { width: 36, align: "center" });
     // Seal text
     doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(8.5)
-       .text("COURSE",    sealCX - 18, sealCY - 14, { width: 36, align: "center" });
+       .text("COURSE",    sealCX - 20, sealCY - 17, { width: 40, align: "center" });
     doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7.5)
-       .text("COMPLETED", sealCX - 22, sealCY + 0, { width: 44, align: "center" });
-    doc.fillColor(GOLD).font("Helvetica").fontSize(9)
-       .text("★", sealCX - 5, sealCY + 13);
+       .text("COMPLETED", sealCX - 24, sealCY - 2, { width: 48, align: "center" });
 
-    // Ribbon tails below seal
-    const rbW  = 20;
-    const rbH  = 26;
-    const rbY0 = sealCY + sealR - 3;
-    // Left ribbon
+    // Ribbon tails
+    const rbW  = 22;
+    const rbH  = 34;
+    const rbY0 = sealCY + sealR - 2;
     doc.save().polygon(
       [sealCX - rbW,     rbY0],
       [sealCX - 3,       rbY0],
       [sealCX - 3,       rbY0 + rbH],
-      [sealCX - rbW / 2, rbY0 + rbH - 7]
+      [sealCX - rbW / 2, rbY0 + rbH - 9]
     ).fillColor(NAVY).fill().restore();
-    // Right ribbon
     doc.save().polygon(
       [sealCX + 3,       rbY0],
       [sealCX + rbW,     rbY0],
-      [sealCX + rbW / 2, rbY0 + rbH - 7],
+      [sealCX + rbW / 2, rbY0 + rbH - 9],
       [sealCX + 3,       rbY0 + rbH]
     ).fillColor(NAVY).fill().restore();
 
     // ── Issue Date ────────────────────────────────────────────────
-    doc.moveTo(dateX, sigLineY).lineTo(dateX + 135, sigLineY)
+    doc.moveTo(dateX, sigLineY).lineTo(dateX + 140, sigLineY)
        .lineWidth(0.7).strokeColor("#9ca3af").stroke();
     doc.fillColor(DARK).font("Helvetica-Bold").fontSize(11)
-       .text(data.completionDate, dateX, sigLineY + 8, { width: 135 });
+       .text(data.completionDate, dateX, sigLineY + 9, { width: 140 });
     doc.fillColor(GRAY).font("Helvetica").fontSize(9)
-       .text("Issue Date", dateX, sigLineY + 24, { width: 135 });
+       .text("Issue Date", dateX, sigLineY + 25, { width: 140 });
 
     // ── QR Code ───────────────────────────────────────────────────
-    const qrSz = 72;
-    const qrX  = W - 96 - qrSz;   // right zone, clear of corner triangle
+    const qrSz = 76;
+    const qrX  = W - 100 - qrSz;   // 900 - 100 - 76 = 724
     const qrY  = sealCY - qrSz / 2 - 2;
     doc.image(qrBuffer, qrX, qrY, { width: qrSz, height: qrSz });
     doc.fillColor("#16a34a").font("Helvetica").fontSize(8)
