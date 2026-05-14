@@ -234,112 +234,153 @@ export async function sendPaymentReceiptEmail(payload: ReceiptEmailPayload): Pro
   await logEmail("receipt", studentEmail);
 }
 
-/* ─── Admin Approval Emails ──────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+   CERTIFICATE EMAIL
+   ───────────────────────────────────────────────────────────────────────── */
 
-export interface ApprovalUserInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  username: string;
-  mobileNumber: string;
+export interface CertificateEmailPayload {
+  studentName:    string;
+  studentEmail:   string;
+  course:         string;
+  stream:         string;
+  certificateId:  string;
+  startMonthYear: string;
+  endMonthYear:   string;
+  completionDate: string;
+  personalMessage?: string;
+  /** Base64-encoded PDF (no data-URI prefix) */
+  pdfBase64:      string;
 }
 
-/** Email to super-admin: new signup awaiting approval */
-export async function sendAdminApprovalRequestEmail(
-  adminEmail: string,
-  user: ApprovalUserInfo,
-  approveUrl: string,
-  rejectUrl: string
-): Promise<void> {
-  const { error } = await getResend().emails.send({
-    from: "ProStack <noreply@prostack-admin.com>",
-    to: adminEmail,
-    subject: `New Admin Registration – ${user.firstName} ${user.lastName} is awaiting approval`,
-    html: `
-<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
-  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
-    <tr><td style="background:#f97316;padding:28px 24px 20px;text-align:center;">
-      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#fff7ed;">ProStack Admin</p>
-      <h1 style="margin:10px 0 0;font-size:26px;font-weight:700;color:#ffffff;">New Registration Request</h1>
-    </td></tr>
-    <tr><td style="padding:28px 32px 20px;color:#374151;">
-      <p style="margin:0 0 18px;font-size:15px;">A new user has registered and is awaiting your approval:</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Full Name</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">${user.firstName} ${user.lastName}</td></tr>
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Username</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">@${user.username}</td></tr>
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Email</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">${user.email}</td></tr>
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;">Mobile</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;">${user.mobileNumber}</td></tr>
+/** Send course completion certificate email with PDF attachment via Resend */
+export async function sendCertificateEmail(payload: CertificateEmailPayload): Promise<void> {
+  const {
+    studentName, studentEmail, course, stream, certificateId,
+    startMonthYear, endMonthYear, completionDate, personalMessage, pdfBase64,
+  } = payload;
+
+  const defaultMsg = `Congratulations on completing the ${course} course! 🎉\nPlease find your certificate attached.`;
+  const message = (personalMessage?.trim()) || defaultMsg;
+  const messageHtml = message.replace(/\n/g, "<br>");
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f0f4ff;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(26,37,87,0.12);">
+
+        <!-- Top accent bar -->
+        <tr><td style="height:5px;background:linear-gradient(90deg,#1a2557,#c9a227,#1a2557);"></td></tr>
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#1a2557;padding:28px 36px 24px;text-align:center;">
+            <p style="margin:0 0 6px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#c9a22780;">Pro Stack Academy</p>
+            <h1 style="margin:0;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:1px;">Certificate of Completion</h1>
+            <p style="margin:10px 0 0;font-size:12px;color:#8fb5ff;">Certificate ID: <strong>${certificateId}</strong></p>
+          </td>
+        </tr>
+
+        <!-- Congratulations banner -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#c9a227,#e8d070,#c9a227);padding:18px 36px;text-align:center;">
+            <p style="margin:0;font-size:16px;font-weight:700;color:#1a2557;">🎓 Congratulations, ${studentName}!</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 36px 24px;">
+            <p style="margin:0 0 20px;font-size:15px;color:#222;line-height:1.8;">${messageHtml}</p>
+
+            <!-- Certificate details card -->
+            <table cellpadding="0" cellspacing="0" width="100%" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:24px;">
+              <tr><td style="padding:14px 20px;background:#1a2557;">
+                <p style="margin:0;font-size:11px;font-weight:700;color:#c9a227;letter-spacing:2px;text-transform:uppercase;">Certificate Details</p>
+              </td></tr>
+              <tr><td style="padding:20px;">
+                <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#374151;width:100%;">
+                  <tr>
+                    <td style="padding:5px 0;font-weight:600;width:45%;">Course</td>
+                    <td style="padding:5px 0;font-weight:700;color:#1a2557;">${course}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;font-weight:600;">Program</td>
+                    <td style="padding:5px 0;">${stream}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;font-weight:600;">Duration</td>
+                    <td style="padding:5px 0;">${startMonthYear} to ${endMonthYear}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;font-weight:600;">Issue Date</td>
+                    <td style="padding:5px 0;">${completionDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:5px 0;font-weight:600;">Certificate ID</td>
+                    <td style="padding:5px 0;font-weight:700;color:#c9a227;">${certificateId}</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#4b5563;line-height:1.8;">
+              Your certificate has been attached to this email as a PDF. You can download and save it for your records.
+            </p>
+            <p style="margin:0 0 24px;font-size:14px;color:#4b5563;line-height:1.8;">
+              We are incredibly proud of your dedication and hard work. Keep growing and all the best for your future endeavors!
+            </p>
+
+            <!-- CTA -->
+            <div style="text-align:center;margin-bottom:8px;">
+              <span style="display:inline-block;background:#1a2557;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;">
+                📎 Certificate attached as PDF
+              </span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 36px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#1a2557;">Pro Stack Academy</p>
+            <p style="margin:0;font-size:12px;color:#6b7280;">#98, Ground Floor, RJ Garden, Marathahalli, Bengaluru – 560037</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">prostackacademy@gmail.com</p>
+          </td>
+        </tr>
+
+        <!-- Bottom accent bar -->
+        <tr><td style="height:4px;background:linear-gradient(90deg,#1a2557,#c9a227,#1a2557);"></td></tr>
+
       </table>
     </td></tr>
-    <tr><td style="padding:0 32px 32px;">
-      <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">Click one of the buttons below to approve or reject this registration:</p>
-      <table cellpadding="0" cellspacing="0"><tr>
-        <td style="padding-right:12px;">
-          <a href="${approveUrl}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;">✅ Approve</a>
-        </td>
-        <td>
-          <a href="${rejectUrl}" style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;">❌ Reject</a>
-        </td>
-      </tr></table>
-      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">These links are single-use. Clicking them will immediately update the user's status.</p>
-    </td></tr>
-    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel · This email was sent automatically.</td></tr>
   </table>
-</div>`,
-  });
-  if (error) console.error("[Resend] Failed to send admin approval email:", error);
-}
+</body>
+</html>`;
 
-/** Email to user: account approved */
-export async function sendUserApprovedEmail(user: ApprovalUserInfo): Promise<void> {
   const { error } = await getResend().emails.send({
-    from: "ProStack <noreply@prostack-admin.com>",
-    to: user.email,
-    subject: "🎉 Your ProStack account has been approved!",
-    html: `
-<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
-  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
-    <tr><td style="background:#16a34a;padding:28px 24px;text-align:center;">
-      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#dcfce7;">ProStack</p>
-      <h1 style="margin:10px 0 0;font-size:28px;font-weight:700;color:#ffffff;">Account Approved! 🎉</h1>
-    </td></tr>
-    <tr><td style="padding:32px;">
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;">Hi <strong>${user.firstName}</strong>,</p>
-      <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">Great news! Your ProStack admin account has been <strong style="color:#16a34a;">approved</strong> by the super admin. You can now log in using your registered credentials.</p>
-      <a href="${process.env.FRONTEND_URL ?? "http://localhost:3000"}/login" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:10px;">Sign In to ProStack →</a>
-      <table style="margin-top:24px;width:100%;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;" cellpadding="0" cellspacing="0">
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Username</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;">@${user.username}</td></tr>
-        <tr><td style="padding:12px 16px;font-size:13px;color:#6b7280;">Email</td><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#111827;">${user.email}</td></tr>
-      </table>
-    </td></tr>
-    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel · Welcome to the team!</td></tr>
-  </table>
-</div>`,
+    from:    "ProStack Academy <noreply@prostack-admin.com>",
+    to:      studentEmail,
+    cc:      "bijjamvijayreddy@gmail.com",
+    subject: `🎓 Your ${course} Completion Certificate – Pro Stack Academy`,
+    html,
+    attachments: [
+      {
+        filename:    `Certificate_${studentName.replace(/\s+/g, "_")}_${certificateId.replace(/\//g, "-")}.pdf`,
+        content:     pdfBase64,
+        contentType: "application/pdf",
+      },
+    ],
   });
-  if (error) console.error("[Resend] Failed to send approval email to user:", error);
-}
 
-/** Email to user: account rejected */
-export async function sendUserRejectedEmail(user: ApprovalUserInfo): Promise<void> {
-  const { error } = await getResend().emails.send({
-    from: "ProStack <noreply@prostack-admin.com>",
-    to: user.email,
-    subject: "Your ProStack registration request was not approved",
-    html: `
-<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:24px;">
-  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,0.12);">
-    <tr><td style="background:#dc2626;padding:28px 24px;text-align:center;">
-      <p style="margin:0;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#fee2e2;">ProStack</p>
-      <h1 style="margin:10px 0 0;font-size:28px;font-weight:700;color:#ffffff;">Registration Not Approved</h1>
-    </td></tr>
-    <tr><td style="padding:32px;">
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;">Hi <strong>${user.firstName}</strong>,</p>
-      <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">We're sorry, but your ProStack admin account registration has been <strong style="color:#dc2626;">rejected</strong> by the super admin. If you believe this is an error, please contact your administrator directly.</p>
-      <a href="mailto:${process.env.ADMIN_EMAIL ?? "admin@prostack.com"}" style="display:inline-block;background:#6b7280;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:10px;">Contact Administrator</a>
-    </td></tr>
-    <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">ProStack Admin Panel</td></tr>
-  </table>
-</div>`,
-  });
-  if (error) console.error("[Resend] Failed to send rejection email to user:", error);
+  if (error) {
+    console.error("[Resend] Failed to send certificate email:", error);
+    throw new Error("Failed to send certificate email.");
+  }
+
+  console.log(`[Resend] Certificate email sent to ${maskEmail(studentEmail)}`);
+  await logEmail("receipt", studentEmail);
 }

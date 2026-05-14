@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Student } from "../models/Student";
-import { sendPaymentReceiptEmail } from "../services/resend.service";
+import { sendPaymentReceiptEmail, sendCertificateEmail } from "../services/resend.service";
+import { generateCertificate, buildCertificateId } from "../services/pdfService";
 
 // GET /api/students/next-number
 // Returns the next auto-generated admissionNo and receiptNo for the current month
@@ -156,5 +157,79 @@ export async function sendReceipt(req: Request, res: Response) {
   } catch (err: any) {
     console.error("[sendReceipt]", err);
     res.status(502).json({ message: err.message ?? "Failed to send receipt email." });
+  }
+}
+
+// POST /api/students/:id/send-certificate
+export async function sendCertificate(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const {
+      course,
+      completionDate,  // "14 May 2026"
+      personalMessage,
+      certificateId,
+    } = req.body as {
+      course?: string;
+      completionDate?: string;
+      personalMessage?: string;
+      certificateId?: string;
+    };
+
+    const student = await Student.findById(id).lean();
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (!student.email) return res.status(400).json({ message: "Student has no email address on file." });
+
+    const usedCourse = course || student.course;
+    const usedCompletion = completionDate || new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+    // Derive start month+year from courseTakenDate or joinedDate
+    const startRaw = student.courseTakenDate || student.joinedDate || "";
+    const startDate = startRaw ? new Date(startRaw) : new Date();
+    const startMonthYear = isNaN(startDate.getTime())
+      ? startRaw
+      : startDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
+    // End month+year from completionDate
+    const endParsed = new Date(usedCompletion);
+    const endMonthYear = isNaN(endParsed.getTime())
+      ? usedCompletion
+      : endParsed.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+
+    const completionYear = isNaN(endParsed.getTime()) ? new Date().getFullYear() : endParsed.getFullYear();
+
+    const certId = certificateId || buildCertificateId(student.admissionNo, student.stream, usedCourse, completionYear);
+
+    const certData = {
+      studentName:    student.name,
+      admissionNo:    student.admissionNo,
+      course:         usedCourse,
+      stream:         student.stream || "Full Stack Development Program",
+      startMonthYear,
+      endMonthYear,
+      certificateId:  certId,
+      completionDate: usedCompletion,
+    };
+
+    const pdfBuffer = await generateCertificate(certData);
+    const pdfBase64 = pdfBuffer.toString("base64");
+
+    await sendCertificateEmail({
+      studentName:    student.name,
+      studentEmail:   student.email,
+      course:         usedCourse,
+      stream:         student.stream || "Full Stack Development Program",
+      certificateId:  certId,
+      startMonthYear,
+      endMonthYear,
+      completionDate: usedCompletion,
+      personalMessage,
+      pdfBase64,
+    });
+
+    res.json({ message: "Certificate sent successfully.", certificateId: certId });
+  } catch (err: any) {
+    console.error("[sendCertificate]", err);
+    res.status(502).json({ message: err.message ?? "Failed to send certificate." });
   }
 }

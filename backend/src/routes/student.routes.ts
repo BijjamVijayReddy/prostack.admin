@@ -8,6 +8,7 @@ import {
   updateStudent,
   deleteStudent,
   sendReceipt,
+  sendCertificate,
 } from "../controllers/student.controller";
 
 const router = Router();
@@ -19,5 +20,6 @@ router.post("/", protect, createStudent);
 router.put("/:id", protect, updateStudent);
 router.delete("/:id", protect, deleteStudent);
 router.post("/:id/send-receipt", protect, sendReceipt);
+router.post("/:id/send-certificate", protect, sendCertificate);
 
 export default router;
