@@ -72,7 +72,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       { firstName: user.firstName ?? "", lastName: user.lastName ?? "", email: user.email ?? "", username: user.username ?? "", mobileNumber: user.mobileNumber },
       approveUrl,
       rejectUrl
-    ).catch((e) => console.error("[Approval Email] Failed:", e));
+    ).catch((e: unknown) => console.error("[Approval Email] Failed:", e));
   } else {
     console.warn("[Approval] ADMIN_EMAIL env var not set — skipping approval notification email.");
   }
@@ -104,7 +104,7 @@ export const approveUser = async (req: Request, res: Response): Promise<void> =>
   sendUserApprovedEmail({
     firstName: user.firstName ?? "", lastName: user.lastName ?? "",
     email: user.email ?? "", username: user.username ?? "", mobileNumber: user.mobileNumber,
-  }).catch((e) => console.error("[Approval Email] Failed:", e));
+  }).catch((e: unknown) => console.error("[Approval Email] Failed:", e));
 
   res.status(200).send(htmlPage(
     "✅ Account Approved",
@@ -134,7 +134,7 @@ export const rejectUser = async (req: Request, res: Response): Promise<void> => 
   sendUserRejectedEmail({
     firstName: user.firstName ?? "", lastName: user.lastName ?? "",
     email: user.email ?? "", username: user.username ?? "", mobileNumber: user.mobileNumber,
-  }).catch((e) => console.error("[Rejection Email] Failed:", e));
+  }).catch((e: unknown) => console.error("[Rejection Email] Failed:", e));
 
   res.status(200).send(htmlPage(
     "❌ Account Rejected",

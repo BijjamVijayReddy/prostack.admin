@@ -384,3 +384,177 @@ export async function sendCertificateEmail(payload: CertificateEmailPayload): Pr
   console.log(`[Resend] Certificate email sent to ${maskEmail(studentEmail)}`);
   await logEmail("receipt", studentEmail);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   USER APPROVAL EMAILS
+   ───────────────────────────────────────────────────────────────────────── */
+
+interface UserInfo {
+  firstName: string;
+  lastName:  string;
+  email:     string;
+  username:  string;
+  mobileNumber: string;
+}
+
+/** Notify the super-admin that a new user is awaiting approval (with approve/reject links) */
+export async function sendAdminApprovalRequestEmail(
+  adminEmail: string,
+  user: UserInfo,
+  approveUrl: string,
+  rejectUrl:  string
+): Promise<void> {
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+  const { error } = await getResend().emails.send({
+    from:    "ProStack <noreply@prostack-admin.com>",
+    to:      adminEmail,
+    subject: `New Admin Account Request – ${fullName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.10);">
+        <tr><td style="height:4px;background:#0d1b3d;"></td></tr>
+        <tr>
+          <td style="background:#0d1b3d;padding:24px 32px 20px;text-align:center;">
+            <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8fb5ff;">ProStack Admin</p>
+            <h1 style="margin:8px 0 0;font-size:20px;font-weight:700;color:#ffffff;">New Account Approval Request</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px;">
+            <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">
+              A new admin account has been registered and is awaiting your approval.
+            </p>
+            <table cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px;width:100%;font-size:13px;color:#374151;">
+              <tr><td style="padding:4px 0;font-weight:600;width:130px;">Name</td><td style="padding:4px 0;font-weight:700;color:#0d1b3d;">${fullName}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Username</td><td style="padding:4px 0;">${user.username}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Email</td><td style="padding:4px 0;">${user.email}</td></tr>
+              <tr><td style="padding:4px 0;font-weight:600;">Mobile</td><td style="padding:4px 0;">${user.mobileNumber}</td></tr>
+            </table>
+            <table cellpadding="0" cellspacing="0" style="margin-top:24px;width:100%;">
+              <tr>
+                <td style="padding-right:8px;">
+                  <a href="${approveUrl}" style="display:block;background:#16a34a;color:#ffffff;text-align:center;padding:12px 0;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">✅ Approve</a>
+                </td>
+                <td style="padding-left:8px;">
+                  <a href="${rejectUrl}" style="display:block;background:#dc2626;color:#ffffff;text-align:center;padding:12px 0;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">❌ Reject</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr><td style="height:4px;background:#0d1b3d;"></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  });
+
+  if (error) {
+    console.error("[Resend] Failed to send approval request email:", error);
+    throw new Error("Failed to send approval request email.");
+  }
+  console.log(`[Resend] Approval request sent to ${maskEmail(adminEmail)} for ${user.email}`);
+}
+
+/** Notify a user that their account has been approved */
+export async function sendUserApprovedEmail(user: UserInfo): Promise<void> {
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+  const { error } = await getResend().emails.send({
+    from:    "ProStack <noreply@prostack-admin.com>",
+    to:      user.email,
+    subject: "Your ProStack Account Has Been Approved",
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.10);">
+        <tr><td style="height:4px;background:#16a34a;"></td></tr>
+        <tr>
+          <td style="background:#0d1b3d;padding:24px 32px 20px;text-align:center;">
+            <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#86efac;">Account Approved</p>
+            <h1 style="margin:8px 0 0;font-size:20px;font-weight:700;color:#ffffff;">Welcome to ProStack! 🎉</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#111827;">Hi <strong>${fullName}</strong>,</p>
+            <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">
+              Great news! Your ProStack admin account (<strong>${user.username}</strong>) has been <strong style="color:#16a34a;">approved</strong>. You can now log in and start using the platform.
+            </p>
+            <p style="margin:0;font-size:13px;color:#6b7280;">If you have any questions, please reach out to the support team.</p>
+          </td>
+        </tr>
+        <tr><td style="height:4px;background:#16a34a;"></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  });
+
+  if (error) {
+    console.error("[Resend] Failed to send approved email:", error);
+    throw new Error("Failed to send approved email.");
+  }
+  console.log(`[Resend] Approved email sent to ${maskEmail(user.email)}`);
+}
+
+/** Notify a user that their account has been rejected */
+export async function sendUserRejectedEmail(user: UserInfo): Promise<void> {
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+  const { error } = await getResend().emails.send({
+    from:    "ProStack <noreply@prostack-admin.com>",
+    to:      user.email,
+    subject: "Update on Your ProStack Account Request",
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.10);">
+        <tr><td style="height:4px;background:#dc2626;"></td></tr>
+        <tr>
+          <td style="background:#0d1b3d;padding:24px 32px 20px;text-align:center;">
+            <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fca5a5;">Account Update</p>
+            <h1 style="margin:8px 0 0;font-size:20px;font-weight:700;color:#ffffff;">ProStack Account Request</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#111827;">Hi <strong>${fullName}</strong>,</p>
+            <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">
+              We regret to inform you that your ProStack admin account request has not been approved at this time.
+            </p>
+            <p style="margin:0;font-size:13px;color:#6b7280;">
+              If you believe this is a mistake or need further clarification, please contact the administrator directly.
+            </p>
+          </td>
+        </tr>
+        <tr><td style="height:4px;background:#dc2626;"></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  });
+
+  if (error) {
+    console.error("[Resend] Failed to send rejected email:", error);
+    throw new Error("Failed to send rejected email.");
+  }
+  console.log(`[Resend] Rejected email sent to ${maskEmail(user.email)}`);
+}
