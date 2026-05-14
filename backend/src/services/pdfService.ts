@@ -55,7 +55,7 @@ export async function generateCertificate(data: CertificateData): Promise<Buffer
     const H  = 595.28;
     const cx = W / 2;
 
-    const doc = new PDFDocument({ size: [W, H], margin: 0, layout: "landscape" });
+    const doc = new PDFDocument({ size: [W, H], margin: 0 });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end",  () => resolve(Buffer.concat(chunks)));
@@ -164,12 +164,12 @@ export async function generateCertificate(data: CertificateData): Promise<Buffer
     // ─────────────────────────────────────────────────────────────
     // BOTTOM SECTION:  Signature | Seal | Issue Date | QR Code
     // ─────────────────────────────────────────────────────────────
-    const sigLineY = 468;   // y of the horizontal signature / date underline
-    const sigX     = 105;   // left edge of signature block
-    const dateX    = 570;   // left edge of issue-date block
-    const sealCX   = 415;   // centre-x of seal
-    const sealCY   = 447;   // centre-y of seal
-    const sealR    = 44;
+    const sigLineY = 490;   // y of the horizontal signature / date underline
+    const sigX     = 90;    // left edge of signature block
+    const dateX    = 535;   // left edge of issue-date block
+    const sealCX   = cx;    // seal perfectly centred horizontally
+    const sealCY   = 458;   // centre-y of seal
+    const sealR    = 46;
 
     // ── Signature ─────────────────────────────────────────────────
     // Cursive-looking signature text above the line
@@ -239,7 +239,7 @@ export async function generateCertificate(data: CertificateData): Promise<Buffer
 
     // ── QR Code ───────────────────────────────────────────────────
     const qrSz = 72;
-    const qrX  = W - 108 - qrSz;
+    const qrX  = W - 96 - qrSz;   // right zone, clear of corner triangle
     const qrY  = sealCY - qrSz / 2 - 2;
     doc.image(qrBuffer, qrX, qrY, { width: qrSz, height: qrSz });
     doc.fillColor("#16a34a").font("Helvetica").fontSize(8)
