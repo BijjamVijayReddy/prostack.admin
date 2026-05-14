@@ -82,3 +82,24 @@ export async function sendReceiptEmail(studentId: string, pdfBase64?: string): P
   const data = await res.json() as { message?: string };
   if (!res.ok) throw new Error(data.message ?? "Failed to send receipt email");
 }
+
+export interface SendCertificatePayload {
+  course: string;
+  completionDate: string;
+  personalMessage?: string;
+  certificateId?: string;
+}
+
+export async function sendCertificateEmail(
+  studentId: string,
+  payload: SendCertificatePayload
+): Promise<{ message: string; certificateId: string }> {
+  const res = await fetch(`${API_BASE}/api/students/${studentId}/send-certificate`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json() as { message?: string; certificateId?: string };
+  if (!res.ok) throw new Error(data.message ?? "Failed to send certificate");
+  return { message: data.message ?? "Sent", certificateId: data.certificateId ?? "" };
+}

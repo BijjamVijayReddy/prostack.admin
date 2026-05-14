@@ -18,6 +18,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DocumentTextIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import { Student } from "../students.types";
 
@@ -25,9 +26,10 @@ interface StudentsTableProps {
   data: Student[];
   onEdit?: (student: Student) => void;
   onReceipt?: (student: Student) => void;
+  onCertificate?: (student: Student) => void;
 }
 
-export function StudentsTable({ data, onEdit, onReceipt }: StudentsTableProps) {
+export function StudentsTable({ data, onEdit, onReceipt, onCertificate }: StudentsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns: ColumnDef<Student>[] = [
@@ -144,6 +146,20 @@ export function StudentsTable({ data, onEdit, onReceipt }: StudentsTableProps) {
         >
           <DocumentTextIcon className="h-3.5 w-3.5" />
           View
+        </button>
+      ),
+    },
+    {
+      id: "certificate",
+      header: "Certificate",
+      cell: ({ row }) => (
+        <button
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition cursor-pointer"
+          title="Send Course Certificate"
+          onClick={() => onCertificate?.(row.original)}
+        >
+          <AcademicCapIcon className="h-3.5 w-3.5" />
+          Send
         </button>
       ),
     },

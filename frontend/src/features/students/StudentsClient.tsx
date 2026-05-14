@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchStudents, fetchStudent } from "./students.api";
 import { Student } from "./students.types";
@@ -10,6 +10,7 @@ import { Button } from "@headlessui/react";
 import { PlusCircleIcon, CheckCircleIcon, XMarkIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { StudentFormModal } from "./components/StudentFormModal";
 import { ReceiptPreviewModal } from "./components/ReceiptPreviewModal";
+import { SendCertificateModal } from "./components/SendCertificateModal";
 import { StudentSearchBar } from "./components/StudentSearchBar";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 
@@ -68,13 +69,14 @@ export function StudentsClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // true initially — no sync setState needed in effect
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
   const [open, setOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [receiptStudent, setReceiptStudent] = useState<Student | null>(null);
   const [receiptAutoSend, setReceiptAutoSend] = useState(false);
+  const [certificateStudent, setCertificateStudent] = useState<Student | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -86,7 +88,15 @@ export function StudentsClient() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadStudents(); }, []);
+  // Initial load: fetch inline so no synchronous setState is called in the effect body
+  useEffect(() => {
+    let cancelled = false;
+    fetchStudents()
+      .then((res) => { if (!cancelled) setStudents(res); })
+      .catch(() => { if (!cancelled) setStudents([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   // Open edit modal if ?edit=<id> is in the URL
   useEffect(() => {
@@ -94,7 +104,7 @@ export function StudentsClient() {
     if (!editId || students.length === 0) return;
     const found = students.find((s) => s._id === editId);
     if (found) {
-      setEditStudent(found);
+      startTransition(() => { setEditStudent(found); });
       router.replace("/students", { scroll: false });
     }
   }, [searchParams, students, router]);
@@ -154,6 +164,7 @@ export function StudentsClient() {
             }
           }}
           onReceipt={(student) => setReceiptStudent(student)}
+          onCertificate={(student) => setCertificateStudent(student)}
         />
       )}
       {/* New student modal */}
@@ -184,6 +195,16 @@ export function StudentsClient() {
         student={receiptStudent}
         autoSend={receiptAutoSend}
         onClose={() => { setReceiptStudent(null); setReceiptAutoSend(false); }}
+      />
+      {/* Send certificate modal */}
+      <SendCertificateModal
+        open={!!certificateStudent}
+        student={certificateStudent}
+        onClose={() => setCertificateStudent(null)}
+        onSent={(name) => {
+          setCertificateStudent(null);
+          setToastMsg(`Certificate sent to ${name} successfully.`);
+        }}
       />
     </div>
   );
