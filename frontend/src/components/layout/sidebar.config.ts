@@ -35,9 +35,9 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Placements",
     icon: BriefcaseIcon,
   },
-  {
-    key: "messages",
-    label: "WhatsApp",
-    icon: ChatBubbleLeftRightIcon,
-  },
+  // {
+  //   key: "messages",
+  //   label: "WhatsApp",
+  //   icon: ChatBubbleLeftRightIcon,
+  // },
 ];
